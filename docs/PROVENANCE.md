@@ -29,8 +29,49 @@ Left as-is per intentional Windows/WSL credential sharing. **Action item: rotate
 
 ---
 
-## 2026-06-07 — Phase 1: Account audit (read-only)
+## 2026-06-07 — Phase 1: Account audit (read-only) — PARTIALLY DEFERRED
 
-Read-only; findings in [AUDIT.md](./AUDIT.md). Cost Explorer billed ~$0.01/call (2 calls).
+- **AWS auth not yet propagated.** STS recognizes the fresh `h0` key, but EC2/IAM/Cost
+  Explorer/etc. return `AuthFailure` / `InvalidClientTokenId`. A 20-minute background poll
+  (`describe-regions`) did not clear it — consistent with the up-to-24h reactivation window.
+  **Phase 1 AWS data collection is deferred** (see [AUDIT.md](./AUDIT.md) for resume commands).
+- **Cost Explorer:** 2 calls attempted, both rejected on auth → **$0 billed** (CE charges
+  only for processed requests).
+- **DSQL multi-region peering: verified via current AWS docs** — `us-east-1` + `us-east-2`
+  peered with `us-west-2` witness is the canonical documented configuration. Details + sources
+  in AUDIT.md §3.
+- **Deliverable ready:** `scripts/audit-sweep.sh` (read-only sweep).
 
-_log continues as actions are taken…_
+---
+
+## 2026-06-07 — Phase 4: Repo & monorepo scaffold
+
+| Action | Command / detail | Why |
+|---|---|---|
+| `git init` on `main` | `git init -b main` | Canonical project monorepo |
+| Local git identity | name `hocmemini`, email → GitHub noreply | Author commits |
+| Scaffold + tooling | pnpm workspaces; strict TS (`tsc` clean); Biome; Vitest; tsx; `packages/db` Kysely+pg client + one-DDL-per-txn migration runner | Per spec |
+| Validated toolchain | `pnpm install` (+esbuild build), `biome check`, `tsc --noEmit`, `vitest` — all green | Readiness |
+| Installed gitleaks `8.30.1` | `scripts/install-gitleaks.sh` → `~/.local/bin` | Secret scanning |
+| Enabled pre-commit hook | `core.hooksPath=.githooks` (gitleaks `git --staged`) | Block secrets from history |
+| 5 granular commits | scaffold → tooling → docs → hooks → audit-sweep; each scanned clean | Provenance |
+| Created **private** GitHub repo | `gh repo create quorum --private` → `github.com/hocmemini/quorum` | Remote |
+| Re-authored 5 commits | `git filter-branch` author+committer email → noreply | **Explicit user approval** (GitHub blocked pushing a private email); content/messages/order unchanged; old gmail commits pruned locally |
+| Pushed `main` | `git push -u origin main` | Publish (private) |
+
+**Note on the re-author.** The standing rule is "never rewrite history." This single
+email-only rewrite of the 5 **unpushed** setup commits (identical content, messages, order)
+was performed **only after explicit user approval**, to keep a private email out of a repo
+that goes public later. No work-provenance was lost; history is append-only from here.
+
+---
+
+## Pending / gated (awaiting user)
+
+- **Phase 1 AWS data** (CE spend, resource sweep, IAM/security, account-level S3 BPA, DSQL
+  account availability) — deferred until auth propagates; resume per AUDIT.md.
+- **Phase 2 cleanup** — gated on line-item approval of the AUDIT.md KILL LIST (not yet
+  producible).
+- **Phase 3 AWS scaffold** (account S3 BPA, `h0-quorum-tfstate-260289091534` bucket, SNS
+  topic + subscription, $20 budget, billing alarm) — gated on approval **and** billing
+  verification; needs your alert email address.
