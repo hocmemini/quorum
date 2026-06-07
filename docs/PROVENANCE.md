@@ -86,6 +86,24 @@ window), not fixable locally. **No resources were created or destroyed. Nothing 
 Runnable commands for all five (plus carried-over prep) are consolidated in
 [REMAINING.md](./REMAINING.md) for a single future pass.
 
+## 2026-06-07 — WP-0 failover spike build (local; apply + run deferred)
+
+Built the WP-0 gate spike. All local work is complete, validated, and pushed; only
+`terraform apply` and the live claims run remain (AWS auth deferred).
+
+| Action | Detail | Why |
+|---|---|---|
+| Verified DSQL Terraform schema | `terraform providers schema -json` on `hashicorp/aws` v6.49 → `aws_dsql_cluster` + `aws_dsql_cluster_peering` (a guessed `aws_dsql_cluster_multi_region` does **not** exist) | "do not guess" |
+| Verified token-signer API | installed `@aws-sdk/dsql-signer` v3.1063.0 → `DsqlSigner.getDbConnect[Admin]AuthToken()` | "do not guess" |
+| Reconfirmed region trio | AWS docs: us-east-1 + us-east-2 + us-west-2 (witness) is the documented US set | RISK-6 |
+| Wrote `infra/spike` | two peered `aws_dsql_cluster` + witness + IAM connect policy; `terraform fmt/init/validate` pass (no apply) | provision infra |
+| Wrote `packages/spike-failover` | pg failover client (token-per-connect, transparent failover, OCC on 40001), one-DDL-per-txn migration, C1/C2/C3 claims + latency, report + teardown scripts | the spike |
+| Validated locally | strict `tsc` clean · Biome clean · **10/10 vitest** unit tests pass (failover + OCC, no AWS) | confidence before apply |
+| Moved SOW → `docs/SOW.md` | per the SOW's own convention; ignored `*:Zone.Identifier` artifacts | provenance |
+
+**Remaining for WP-0 (needs auth):** `terraform -chdir=infra/spike apply` → wire `.env` →
+`pnpm --filter @quorum/spike-failover report` → commit `SPIKE_RESULTS.md` → `scripts/teardown-spike.sh`.
+
 ## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
 
 All blocked on the AWS billing/verification window (auth). When `aws ec2 describe-regions`

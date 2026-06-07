@@ -185,5 +185,20 @@ deactivate IAM users/keys before deleting. Log every command to PROVENANCE.
 
 ---
 
-## C. Then — WP-0 Aurora DSQL failover spike → `packages/spike-failover`
-Needs live multi-region DSQL clusters, so it also waits on auth/billing clearing.
+## C. WP-0 Aurora DSQL failover spike → `packages/spike-failover`
+
+**Built + validated locally (2026-06-07):** `infra/spike` (`terraform validate` ✓),
+`packages/spike-failover` (strict `tsc` ✓, **10/10** unit tests ✓), schemas/APIs verified
+against current docs. Remaining steps need live auth:
+
+```sh
+export AWS_PROFILE=h0
+terraform -chdir=infra/spike init
+terraform -chdir=infra/spike apply                                   # clusters reach ACTIVE in a few min
+terraform -chdir=infra/spike output -raw spike_env > packages/spike-failover/.env
+pnpm --filter @quorum/spike-failover report                          # PASS/FAIL gate + writes SPIKE_RESULTS.md
+git add packages/spike-failover/SPIKE_RESULTS.md && git commit -m "spike: WP-0 results"
+scripts/teardown-spike.sh                                            # no idle cost
+```
+
+Go/no-go by the SOW's Jun 9 checkpoint (WP-0 gates the whole project).
