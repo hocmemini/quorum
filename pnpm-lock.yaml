@@ -46,9 +46,16 @@ importers:
 
   packages/spike-failover:
     dependencies:
-      '@quorum/db':
-        specifier: workspace:*
-        version: link:../db
+      '@aws-sdk/dsql-signer':
+        specifier: ^3.1063.0
+        version: 3.1063.0
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
 
 packages:
 

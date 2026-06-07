@@ -3,7 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "report": "tsx src/report.ts",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@quorum/db": "workspace:*"
+    "@aws-sdk/dsql-signer": "^3.1063.0",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0"
   }
 }
