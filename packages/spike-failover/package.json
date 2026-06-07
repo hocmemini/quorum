@@ -7,6 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "report": "tsx src/report.ts",
+    "smoke": "tsx src/failover-smoke.ts",
     "test": "vitest run"
   },
   "dependencies": {
