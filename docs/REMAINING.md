@@ -1,9 +1,12 @@
 # Quorum — Consolidated Remaining Work
 
-Run top-to-bottom in **one pass once AWS auth clears**. Everything here is blocked today
-because the `h0` key authenticates intermittently and then fully fails
-(`InvalidClientTokenId` / `AuthFailure`) — the account's up-to-24h billing/verification
-window. As of **2026-06-07 18:58 UTC even STS fails**, so nothing below could execute.
+**Status (2026-06-07): AWS auth works** with `AWS_PROFILE=h0`. The earlier "verification
+window blocking everything" was a misdiagnosis — unqualified calls had fallen back to a stale
+`default` profile (see PROVENANCE). Core services (DSQL, EC2, RDS, Lambda, S3, IAM, DynamoDB)
+all work and are empty; a few non-core services (Redshift, Kinesis, MSK, App Runner, FSx)
+return `SubscriptionRequired` — a narrow new-account subscription state, none of which we use.
+Phase 1 audit is **done** (`docs/private/AUDIT.md`); the items below create resources and need
+your go-ahead / operator action. Always run with `AWS_PROFILE=h0`.
 
 **Standing ground rules for all AWS work below:** region `us-east-1`; imperative AWS CLI only
 (no Terraform, nothing into state); tag every taggable resource `Project=h0-credits,
