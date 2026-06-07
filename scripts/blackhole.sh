@@ -1,37 +1,37 @@
-#!/usr/bin/env bash
-# Locally blackhole a DSQL endpoint in WSL2 to test failover under a REAL hanging connection:
-# egress SYNs are dropped, so connect() hangs until the client's connectionTimeoutMillis trips
-# and the FailoverClient moves to the next endpoint. This exercises the timeout/hang code path
-# (different from a cleanly-removed endpoint) for pennies, without touching AWS networking.
-# The Phase 3 demo upgrades this to a real partition via a deny-all NACL or AWS FIS.
+#!/bin/sh
+# Locally blackhole a DSQL endpoint to validate failover under a REAL hanging connection.
+# DSQL regional endpoints resolve to MULTIPLE / rotating IPs, so dropping one resolved IP with
+# iptables is unreliable — the client just reconnects on another IP (observed 2026-06-07: smoke
+# was still served by the "blackholed" region). Instead we pin the hostname to a non-routable
+# blackhole IP via /etc/hosts, so EVERY connection to it hangs until the client connect-timeout
+# trips and the FailoverClient moves to the next region. The Phase-3 demo upgrades this to a real
+# partition (deny-all NACL / AWS FIS), which is server-side and not subject to client DNS.
 #
-#   sudo scripts/blackhole.sh <hostname>     # drop egress to the host's resolved IPv4 addresses
-#   sudo scripts/blackhole.sh --undo         # remove every rule this script added
+#   sudo scripts/blackhole.sh <hostname>     # pin hostname -> blackhole IP
+#   sudo scripts/blackhole.sh --undo         # remove the pin
 #
-# Requires sudo (iptables). Uses a dedicated chain so --undo is exact and self-contained.
-set -euo pipefail
-CHAIN="H0_BLACKHOLE"
+# Requires sudo (edits /etc/hosts). POSIX sh, no deps. Marker-tagged for an exact undo.
+# (Test the text logic without sudo: BLACKHOLE_HOSTS=/tmp/h sh scripts/blackhole.sh <host>)
+set -u
+HOSTS="${BLACKHOLE_HOSTS:-/etc/hosts}"
+MARK="# h0-spike-blackhole"
+BLACKHOLE_IP="198.51.100.1"   # RFC 5737 TEST-NET-2: unrouted -> SYN gets no reply -> hang
+
+strip() { grep -v "$MARK" "$HOSTS" 2>/dev/null || true; }
 
 if [ "${1:-}" = "--undo" ]; then
-  iptables -D OUTPUT -j "$CHAIN" 2>/dev/null || true
-  iptables -F "$CHAIN" 2>/dev/null || true
-  iptables -X "$CHAIN" 2>/dev/null || true
-  echo "blackhole removed."
+  [ -w "$HOSTS" ] || { printf 'blackhole: cannot write %s (use sudo)\n' "$HOSTS" >&2; exit 1; }
+  tmp=$(mktemp); strip > "$tmp"; cat "$tmp" > "$HOSTS"; rm -f "$tmp"
+  echo "blackhole pins removed from $HOSTS"
   exit 0
 fi
 
 HOST="${1:?usage: sudo scripts/blackhole.sh <hostname> | --undo}"
-mapfile -t IPS < <(getent ahostsv4 "$HOST" | awk '{print $1}' | sort -u)
-[ "${#IPS[@]}" -eq 0 ] && {
-  echo "could not resolve $HOST" >&2
-  exit 1
-}
-
-iptables -nL "$CHAIN" >/dev/null 2>&1 || iptables -N "$CHAIN"
-iptables -C OUTPUT -j "$CHAIN" >/dev/null 2>&1 || iptables -A OUTPUT -j "$CHAIN"
-for ip in "${IPS[@]}"; do
-  iptables -C "$CHAIN" -d "$ip" -j DROP >/dev/null 2>&1 || iptables -A "$CHAIN" -d "$ip" -j DROP
-  echo "DROP egress -> ${ip} (${HOST})"
-done
-echo "blackhole active. Validate failover:  pnpm --filter @quorum/spike-failover smoke"
-echo "remove when done:                     sudo $0 --undo"
+[ -w "$HOSTS" ] || { printf 'blackhole: cannot write %s (use sudo)\n' "$HOSTS" >&2; exit 1; }
+tmp=$(mktemp)
+strip > "$tmp"
+printf '%s\t%s\t%s\n' "$BLACKHOLE_IP" "$HOST" "$MARK" >> "$tmp"
+cat "$tmp" > "$HOSTS"; rm -f "$tmp"
+echo "blackhole active: $HOST -> $BLACKHOLE_IP (in $HOSTS)"
+echo "validate: (AWS_PROFILE=h0, .env sourced)  pnpm --filter @quorum/spike-failover smoke   # expect us-east-2"
+echo "remove:   sudo $0 --undo"
