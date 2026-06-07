@@ -26,6 +26,19 @@ importers:
 
   apps/web: {}
 
+  functions/dsql-monitor:
+    dependencies:
+      '@aws-sdk/client-cloudwatch':
+        specifier: ^3.700.0
+        version: 3.1063.0
+      '@quorum/spike-failover':
+        specifier: workspace:*
+        version: link:../../packages/spike-failover
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
+
   functions/ingest: {}
 
   packages/db:
@@ -75,6 +88,10 @@ packages:
 
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
+
+  '@aws-sdk/client-cloudwatch@3.1063.0':
+    resolution: {integrity: sha512-A/PG9D709oSFwutfP5CyATQJzc2IyhicMirByvkLkrj8ezSunB0/+ZRJdPibONolE0P2+kneQqHttanspULpAw==}
+    engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.974.18':
     resolution: {integrity: sha512-JDYCPI0j7zGrzXTDFsLB346cxss7J/AxH7+O0MzWlqppJBEyB9Qe6TQXRL6iwLUo/xZkNv9KFmBL2hqElmwW0g==}
@@ -495,6 +512,10 @@ packages:
     resolution: {integrity: sha512-GGP3O9QFD24uGeAXYUjwSTXARoqpZykHadOmA8G5vfJPK0/DC67qa//0qvqrJzL1xc8WQWX7/yc7fwudjPHPhA==}
     engines: {node: '>=14.0.0'}
 
+  '@smithy/middleware-compression@4.4.6':
+    resolution: {integrity: sha512-wZQpnjrGSO2IFxhwWNaeRzHh2swSwRGWaCVgQN9zqYdtP98tcNYyqI7YvPeVTwf9CvQTas7xlmR3NY5L1i32mg==}
+    engines: {node: '>=18.0.0'}
+
   '@smithy/node-http-handler@4.7.7':
     resolution: {integrity: sha512-ZAFvHXrEk6K180EVhmZVg8GU5pUH5BSFqRs27JW3j1qEFx9YyYwWFx17x/MHcjALYimGAji7qEOlF1++be+G5A==}
     engines: {node: '>=18.0.0'}
@@ -613,6 +634,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.1:
+    resolution: {integrity: sha512-/exOvEuc+/iaUm105QIiOt4LpBdMTWsXxqR0HDF35vx3fmaKzw7354gTilCh5rkzEt8WYyG//ku3h3nRmd7CHQ==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -962,6 +986,20 @@ snapshots:
     dependencies:
       '@aws-sdk/types': 3.973.11
       '@smithy/util-utf8': 2.3.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-cloudwatch@3.1063.0':
+    dependencies:
+      '@aws-crypto/sha256-browser': 5.2.0
+      '@aws-crypto/sha256-js': 5.2.0
+      '@aws-sdk/core': 3.974.18
+      '@aws-sdk/credential-provider-node': 3.972.52
+      '@aws-sdk/types': 3.973.11
+      '@smithy/core': 3.24.6
+      '@smithy/fetch-http-handler': 5.4.6
+      '@smithy/middleware-compression': 4.4.6
+      '@smithy/node-http-handler': 4.7.7
+      '@smithy/types': 4.14.3
       tslib: 2.8.1
 
   '@aws-sdk/core@3.974.18':
@@ -1331,6 +1369,13 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@smithy/middleware-compression@4.4.6':
+    dependencies:
+      '@smithy/core': 3.24.6
+      '@smithy/types': 4.14.3
+      fflate: 0.8.1
+      tslib: 2.8.1
+
   '@smithy/node-http-handler@4.7.7':
     dependencies:
       '@smithy/core': 3.24.6
@@ -1486,6 +1531,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
+  fflate@0.8.1: {}
 
   fsevents@2.3.3:
     optional: true

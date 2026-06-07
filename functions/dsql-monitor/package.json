@@ -1,0 +1,17 @@
+{
+  "name": "@quorum/dsql-monitor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Scheduled Lambda that runs the WP-0 DSQL claims + latency and emits CloudWatch metrics (DEC-011).",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/handler.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --external:pg-native"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.700.0",
+    "@quorum/spike-failover": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}

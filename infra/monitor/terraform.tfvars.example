@@ -1,0 +1,14 @@
+aws_profile        = "h0"
+region             = "us-east-1"
+
+# From the app cluster (WP-8) — real values go in gitignored terraform.tfvars:
+dsql_endpoint_use1 = "<id>.dsql.us-east-1.on.aws"
+dsql_endpoint_use2 = "<id>.dsql.us-east-2.on.aws"
+cluster_arns = [
+  "arn:aws:dsql:us-east-1:<account-id>:cluster/<id>",
+  "arn:aws:dsql:us-east-2:<account-id>:cluster/<id>",
+]
+
+# schedule_expression      = "rate(6 hours)"
+# latency_p99_threshold_ms = 3000
+# alarm_sns_topic_arn      = "arn:aws:sns:us-east-1:<account-id>:quorum-alerts"
