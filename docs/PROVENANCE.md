@@ -162,6 +162,18 @@ Results: `packages/spike-failover/SPIKE_RESULTS.md`. **WP-0 gate = GO** — the 
 active-active thesis is validated; the code carries forward (DEC-006). Clusters left running for
 now (DSQL scales to zero when idle); `scripts/teardown-spike.sh` tears them down.
 
+## 2026-06-07 — WP-0 closeout: real-hang failover validated + spike torn down
+
+- **Blackhole smoke (real network hang).** Fixed the local blackhole to pin the endpoint
+  hostname → unrouted IP (`198.51.100.1`) via `/etc/hosts` — the iptables single-IP DROP was
+  insufficient because DSQL endpoints resolve to multiple/rotating IPs (smoke was still served
+  by the "blackholed" region). Re-run with us-east-1 blackholed: read+write **failed over to
+  us-east-2** after the ~4 s connect timeout (4504 ms / 4159 ms). Confirms the real network-hang
+  failover path (C3's in-process flag only exercised the logic).
+- **Teardown.** `scripts/teardown-spike.sh` → `terraform destroy` removed all **6 resources**
+  (2 clusters + 2 peerings + IAM policy + attachment); verification sweep shows no clusters in
+  any region and no spike IAM policy. **Zero idle cost.** Spike code + Terraform retained for WP-8.
+
 ## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
 
 All blocked on the AWS billing/verification window (auth). When `aws ec2 describe-regions`
