@@ -297,6 +297,7 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - 2026-06-06: Document created. Initial scope, architecture, and schedule locked.
 - 2026-06-07: WP-0 spike built and validated locally (infra/spike + packages/spike-failover; terraform validate, strict tsc, 10/10 unit tests). AWS apply/run deferred on the account verification window. Added DEC-007 (raw pg for the spike) and DEC-008 (docs/ public-safe, docs/private/ for operational detail; AUDIT.md moved, PROVENANCE redacted). SOW relocated to docs/SOW.md.
 - 2026-06-07: Added DEC-009 (Vercel CLI-deploy-only policy). Promoted the decision-log protocol into CLAUDE.md (new "Decision governance" + "Vercel deployment policy" sections) and added scripts/preflight-vercel.sh (account-mismatch guard).
+- 2026-06-07: WP-0 failover spike APPLIED and **PASSED** (C1 strong consistency, C2 active-active, C3 region-failure survival; cross-region write median 754 ms / p99 994 ms, n=50). Go/no-go gate (§7.1) = **GO** — DSQL multi-region thesis validated; code carries forward (DEC-006).
 
 ---
 

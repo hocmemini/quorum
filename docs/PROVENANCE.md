@@ -145,6 +145,23 @@ unset var), since this machine may hold a session for a different production Ver
 Documented `VERCEL_EXPECTED_ACCOUNT` in `.env.example` (value in gitignored `.env.local`).
 Confirmed `docs/private/AUDIT.md` is gitignored and untracked (DEC-008 move stands).
 
+## 2026-06-07 — WP-0 failover spike: APPLIED + PASSED (gate = GO)
+
+`terraform -chdir=infra/spike apply` created the multi-region DSQL pair (us-east-1 + us-east-2,
+witness us-west-2) + IAM connect policy (6 resources; clusters ACTIVE and peered in ~2m13s).
+`pnpm --filter @quorum/spike-failover report` ran the migration (`0001_spike_event.sql` —
+`CREATE TABLE` + `CREATE INDEX ASYNC`, one DDL per transaction) then the three claims —
+**all PASS**:
+
+- **C1 strong consistency:** wrote via us-east-1, read via us-east-2 with no polling.
+- **C2 active-active:** 50 concurrent dual-region writes; both regions return the identical complete set (51 events), conflicts retried.
+- **C3 survival:** us-east-1 marked unreachable → wrote/read via us-east-2; us-east-1 returned all outage writes after restore.
+- **Cross-region write latency:** median 754 ms, p99 994 ms (n=50).
+
+Results: `packages/spike-failover/SPIKE_RESULTS.md`. **WP-0 gate = GO** — the DSQL multi-region
+active-active thesis is validated; the code carries forward (DEC-006). Clusters left running for
+now (DSQL scales to zero when idle); `scripts/teardown-spike.sh` tears them down.
+
 ## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
 
 All blocked on the AWS billing/verification window (auth). When `aws ec2 describe-regions`
