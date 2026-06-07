@@ -3,43 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Pool } from 'pg';
 import { createDsqlPool, dsqlConfigFromEnv } from './client';
-
-/** SQLSTATE codes (see CLAUDE.md). */
-const SERIALIZATION_FAILURE = '40001';
-const UNIQUE_VIOLATION = '23505';
-
-interface OccOptions {
-  maxAttempts?: number;
-  baseDelayMs?: number;
-  maxDelayMs?: number;
-}
-
-function isPgError(e: unknown): e is { code?: string } {
-  return typeof e === 'object' && e !== null && 'code' in e;
-}
-
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Optimistic concurrency control: retry the writer on SQLSTATE 40001 with exponential
- * backoff + full jitter. WRITES ONLY — never wrap reads (CLAUDE.md).
- */
-export async function withOccRetry<T>(fn: () => Promise<T>, opts: OccOptions = {}): Promise<T> {
-  const maxAttempts = opts.maxAttempts ?? 8;
-  const baseDelayMs = opts.baseDelayMs ?? 25;
-  const maxDelayMs = opts.maxDelayMs ?? 2000;
-  let attempt = 0;
-  for (;;) {
-    try {
-      return await fn();
-    } catch (e) {
-      attempt += 1;
-      if (!isPgError(e) || e.code !== SERIALIZATION_FAILURE || attempt >= maxAttempts) throw e;
-      const ceiling = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1));
-      await sleep(Math.random() * ceiling); // full jitter
-    }
-  }
-}
+import { isUniqueViolation, withOccRetry } from './occ';
 
 /**
  * Split a migration file into individual statements. By contract each statement is a single
@@ -87,7 +51,7 @@ async function recordApplied(pool: Pool, name: string, checksum: string): Promis
         checksum,
       ]);
     } catch (e) {
-      if (isPgError(e) && e.code === UNIQUE_VIOLATION) return; // already recorded — success
+      if (isUniqueViolation(e)) return; // already recorded — success
       throw e;
     }
   });
