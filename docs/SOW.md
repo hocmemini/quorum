@@ -290,11 +290,13 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - **DEC-006 (2026-06-06): Failover spike goes into the monorepo as WP-0, not a throwaway repo.** Rationale: if the spike proves the thesis, the proven code carries forward into the final project.
 - **DEC-007 (2026-06-07): WP-0 spike uses raw node-postgres; DEC-003 (Kysely) applies to the production data layer only.** Rationale: the spike validates infrastructure with minimum variables, and Kysely wraps the same pg driver, so the connection, token, and OCC retry code carry forward unchanged. Sequencing, not drift.
 - **DEC-008 (2026-06-07): `docs/` is public-safe by default; `docs/private/` (gitignored) holds operational detail** — AUDIT.md, account identifiers, IAM names, spend figures. PROVENANCE.md records actions but redacts account-specific identifiers. The public flip requires a redaction review, or ships as a clean mirror with the private original retained as verification canon (history already contains earlier identifiers; we do not rewrite it).
+- **DEC-009 (2026-06-07): The hackathon Vercel account is CLI-deploy only, no Git provider connection.** Rationale: the owner's GitHub identity is login-bound to a separate production Vercel account, and login connections are one-to-one, so connecting it would risk lockout or auto-deploy breakage on the production property. Deploys via `vercel link` and `vercel deploy`; a `vercel whoami` scope check precedes every deploy.
 
 **11.2 Change log.** One line per material change to the plan. Date, what changed, why.
 
 - 2026-06-06: Document created. Initial scope, architecture, and schedule locked.
 - 2026-06-07: WP-0 spike built and validated locally (infra/spike + packages/spike-failover; terraform validate, strict tsc, 10/10 unit tests). AWS apply/run deferred on the account verification window. Added DEC-007 (raw pg for the spike) and DEC-008 (docs/ public-safe, docs/private/ for operational detail; AUDIT.md moved, PROVENANCE redacted). SOW relocated to docs/SOW.md.
+- 2026-06-07: Added DEC-009 (Vercel CLI-deploy-only policy). Promoted the decision-log protocol into CLAUDE.md (new "Decision governance" + "Vercel deployment policy" sections) and added scripts/preflight-vercel.sh (account-mismatch guard).
 
 ---
 

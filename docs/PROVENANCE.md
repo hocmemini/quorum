@@ -116,6 +116,35 @@ Built the WP-0 gate spike. All local work is complete, validated, and pushed; on
 
 _History note: earlier commits already contain pre-redaction identifiers; per the no-rewrite rule, history is unchanged. The public flip is a redaction review or a clean mirror (DEC-008)._
 
+## 2026-06-07 — Auth unblocked + Phase 1 audit (profile misdiagnosis corrected)
+
+**Correction to earlier entries.** The intermittent `InvalidClientTokenId` / `AuthFailure`
+attributed above to a "billing/verification window" was a **misdiagnosis**. Root cause: the
+non-interactive shell never had `AWS_PROFILE=h0` (it lives only in `~/.bashrc`, which
+non-interactive shells don't source) and `--profile h0` was passed inconsistently — so service
+calls fell back to a stale `default` profile with a dead key. With `AWS_PROFILE=h0` set, every
+service (STS, EC2, IAM, S3, DSQL) works and is stable; the `h0` account/key were fine throughout.
+**Lesson: always `export AWS_PROFILE=h0` (or pass `--profile h0`) in automation here.**
+
+Phase 1 audit then ran read-only (`AWS_PROFILE=h0`). Detailed findings in `docs/private/AUDIT.md`.
+Public-safe summary:
+- Clean, near-empty account. Root: no access keys, MFA enabled. 1 IAM user (deploy user; no MFA),
+  3 roles — none with `AdministratorAccess` or wildcard trust. 0 customer-managed policies. 0 S3 buckets.
+- **Account-level S3 Block Public Access is not set** → enable in Phase 3.
+- DSQL available in `us-east-1`, `us-east-2`, `us-west-2` (no clusters yet).
+- Cost Explorer has no data yet (new account); ~$0 spend.
+- Resource sweep (`scripts/audit-sweep.sh`) across all enabled regions → KILL/KEEP in AUDIT.md.
+
+## 2026-06-07 — Governance pass (DEC-009 + decision protocol)
+
+File/git only; no AWS calls. Added **DEC-009** (Vercel CLI-deploy-only, no Git connection) to
+SOW §11.1 + a Change Log line. Promoted the decision-log convention into `CLAUDE.md` ("Decision
+governance" + "Vercel deployment policy" sections). Added `scripts/preflight-vercel.sh` — a
+POSIX guard that fails loudly if `vercel whoami` ≠ `VERCEL_EXPECTED_ACCOUNT` (or no session /
+unset var), since this machine may hold a session for a different production Vercel account.
+Documented `VERCEL_EXPECTED_ACCOUNT` in `.env.example` (value in gitignored `.env.local`).
+Confirmed `docs/private/AUDIT.md` is gitignored and untracked (DEC-008 move stands).
+
 ## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
 
 All blocked on the AWS billing/verification window (auth). When `aws ec2 describe-regions`

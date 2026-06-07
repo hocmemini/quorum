@@ -51,4 +51,29 @@ do not relitigate them; implement against them.
   **no DynamoDB lock table**). The `infra/bootstrap` stack keeps its own state **local and
   gitignored** (chicken-and-egg).
 
+## Vercel deployment policy
+
+- This project deploys to a **dedicated Vercel account via CLI only** (DEC-009). **Never**
+  connect a Git provider to this Vercel account, **never** use the dashboard import flow, and
+  **never** enable or suggest push-to-deploy.
+- Before any `vercel` command that mutates state (`link`, `deploy`, `env`, `rm`, `promote`,
+  `alias`), run `scripts/preflight-vercel.sh` and **stop on a nonzero exit**.
+- `vercel deploy` for previews, `vercel deploy --prod` for production — always with the project
+  linked at `apps/web`.
+- This machine may at times hold a CLI session for a **different, production** Vercel account.
+  The preflight check is **not optional and is never skipped for speed**.
+
+## Decision governance
+
+- Material decisions (architecture, tooling, scope, security posture, external accounts —
+  anything a future maintainer would ask "why" about) require a **DEC entry in `docs/SOW.md`
+  §11.1**, committed with or before the implementing change. Plan changes get a one-line Change
+  Log entry in §11.2.
+- DEC entries are **append-only, sequentially numbered, dated**. Never edit, renumber, or delete
+  an existing entry. **Git history is the integrity layer — which is why history is never
+  rewritten or squashed.**
+- If you hit a material decision mid-task with no covering DEC entry: draft the entry, present it
+  for user approval, and **do not implement until approved**. Minor implementation details need
+  no entry; when unsure, ask.
+
 See `docs/PROVENANCE.md` (action log) and `docs/private/AUDIT.md` (account audit).
