@@ -1,0 +1,27 @@
+{
+  "name": "quorum",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Incident command plane on Aurora DSQL (multi-region) — H0 hackathon",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "check": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.16",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
