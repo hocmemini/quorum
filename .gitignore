@@ -1,0 +1,55 @@
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+
+# --- Build output ---
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# --- Environment & secrets (repo goes public later — be strict) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+*.p12
+credentials
+.aws/
+.aws
+
+# --- Terraform ---
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Provider lock file IS committed (intentional):
+!**/.terraform.lock.hcl
+
+# --- Logs ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Audit raw dumps (account-specific; never for a public repo) ---
+docs/*-raw.txt
+scripts/*.out
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
