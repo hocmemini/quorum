@@ -314,6 +314,7 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - 2026-06-07: Added DEC-011 + `functions/dsql-monitor` (scheduled Lambda reusing the WP-0 claims) and `infra/monitor` (Lambda + EventBridge schedule + CloudWatch alarms) to automate the consistency/active-active/failover/latency checks against live DSQL, continuous monitoring, no manual runs.
 - 2026-06-07: DEC-012, the DSQL monitor is repurposed as a live observability layer for the demo + judging window (war-room UI reads Quorum/DSQLMonitor metrics; isolated probe table; within budget). Bundle confirmed loadable. Carrying on with WP-3.
 - 2026-06-07: Added WP-12, editorial and hygiene pass with pre-submission and public-flip modes, as a Phase 5 gate and a precondition for any public flip.
+- 2026-06-07: Ran WP-12 editorial pass (MODE=pre-submission). Mechanical hygiene fixes applied (unicode ASCII-fold, markdown voice pass, username-path redaction, .env.example fix, tooling and configs); fresh-clone gate PASS; report at docs/EDITORIAL-2026-06-07-pre-submission.md. Result PASS, 2 minor items for review.
 
 ---
 

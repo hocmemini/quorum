@@ -188,3 +188,18 @@ succeeds, run REMAINING.md top-to-bottom:
 
 **Open user action items:** rotate the `h0` key when done (it was pasted in chat); provide an
 alert email for Phase 3; line-item approve the KILL LIST once B1 produces it.
+
+## 2026-06-07: Editorial and hygiene pass (WP-12, MODE=pre-submission)
+
+Ran the WP-12 editorial gate. Report:
+[EDITORIAL-2026-06-07-pre-submission.md](./EDITORIAL-2026-06-07-pre-submission.md). Mechanical
+fixes (commit `chore(editorial): pre-submission hygiene pass`): ASCII-folded 22 code/config/TF
+files; voice pass removed em-dashes from all markdown; redacted a local OS username path in this
+file; removed `DSQL_ENDPOINT_WITNESS` from `.env.example` (a witness region has no endpoint);
+added markdownlint-cli2, knip, cspell tooling, configs, and lint scripts. Verified: no invisibles
+or bidi; no identifiers or secrets outside `docs/private`; docs/private, .vercel, tfstate, .env
+untracked; gitleaks full history (29 commits) clean; no TODO/FIXME; knip no dead code; terraform
+fmt and validate clean; `private:true` on all 6 packages; DEC-001..012 sequential. Fresh-clone
+gate PASS (install, check, typecheck, 27 tests, build from scratch). Result PASS, with 2 minor
+review items (the word "additionally" in the provided WP-12 text; `.env.example` placeholder
+reconciliation at WP-6/7). cspell substituted for typos (no npm package).

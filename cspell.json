@@ -81,7 +81,9 @@
     "NTFS",
     "ECONN",
     "Devpost",
-    "Kafka"
+    "Kafka",
+    "bidi",
+    "invisibles"
   ],
   "ignorePaths": [
     "node_modules/**",
