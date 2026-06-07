@@ -4,7 +4,7 @@ Records every material (state-changing) action taken while preparing the account
 repo. Read-only audit calls are summarized, not exhaustively logged.
 **Secrets (access keys, tokens) are never recorded in this file.**
 
-- **AWS account:** `260289091534` (IAM principal `h0-deploy`)
+- **AWS account:** `<account redacted; see docs/private>` (IAM principal `<deploy-user>`)
 - **Default region:** `us-east-1` · **Project regions:** `us-east-1`, `us-east-2` (active), `us-west-2` (witness)
 - **AWS access:** profile `h0` (`AWS_PROFILE=h0`)
 
@@ -18,7 +18,7 @@ repo. Read-only audit calls are summarized, not exhaustively logged.
 | Installed pnpm `11.5.2` | `corepack enable && corepack prepare pnpm@latest --activate` | Workspace package manager (was missing) |
 | Configured AWS profile `h0` | `aws configure set …` → `~/.aws/credentials` (secret **not** recorded) | Programmatic access |
 | Set shell default profile | appended `export AWS_PROFILE=h0` to `~/.bashrc` (profile name only, no secret) | Make `h0` active by default |
-| Verified identity | `aws sts get-caller-identity --profile h0` → account `260289091534`, user `h0-deploy` | Confirm access works |
+| Verified identity | `aws sts get-caller-identity --profile h0` → account `<account redacted; see docs/private>`, user `<deploy-user>` | Confirm access works |
 
 **Security note — credential file perms:** `~/.aws` is a symlink to
 `/mnt/c/Users/hocme/.aws` (Windows NTFS surfaced through WSL `v9fs`). Linux `chmod 600`
@@ -34,7 +34,7 @@ Left as-is per intentional Windows/WSL credential sharing. **Action item: rotate
 - **AWS auth not yet propagated.** STS recognizes the fresh `h0` key, but EC2/IAM/Cost
   Explorer/etc. return `AuthFailure` / `InvalidClientTokenId`. A 20-minute background poll
   (`describe-regions`) did not clear it — consistent with the up-to-24h reactivation window.
-  **Phase 1 AWS data collection is deferred** (see [AUDIT.md](./AUDIT.md) for resume commands).
+  **Phase 1 AWS data collection is deferred** (see [AUDIT.md](./private/AUDIT.md) for resume commands).
 - **Cost Explorer:** 2 calls attempted, both rejected on auth → **$0 billed** (CE charges
   only for processed requests).
 - **DSQL multi-region peering: verified via current AWS docs** — `us-east-1` + `us-east-2`
@@ -103,6 +103,18 @@ Built the WP-0 gate spike. All local work is complete, validated, and pushed; on
 
 **Remaining for WP-0 (needs auth):** `terraform -chdir=infra/spike apply` → wire `.env` →
 `pnpm --filter @quorum/spike-failover report` → commit `SPIKE_RESULTS.md` → `scripts/teardown-spike.sh`.
+
+## 2026-06-07 — Public-safe pass + spike hardening (DEC-007, DEC-008)
+
+| Action | Detail | Why |
+|---|---|---|
+| Moved `docs/AUDIT.md` → `docs/private/AUDIT.md` (gitignored) | untracked from HEAD; account id, IAM names, inventory, spend leave the public tree | DEC-008 |
+| Redacted account-specific identifiers | account id + IAM username → placeholders in CLAUDE.md, this file, REMAINING.md, infra/bootstrap | DEC-008 |
+| Spike IAM made public-safe | `connect_user` default `""` + `count` guard; example uses a placeholder (real value in gitignored tfvars) | DEC-008 |
+| Added real-hang failover test | `scripts/blackhole.sh` (iptables) + `pnpm … smoke` (`failover-smoke.ts`) | exercise timeout/failover under a true TCP hang before NACL/FIS |
+| Re-validated | `terraform validate`, strict `tsc`, Biome, 10/10 vitest — all green | confidence |
+
+_History note: earlier commits already contain pre-redaction identifiers; per the no-rewrite rule, history is unchanged. The public flip is a redaction review or a clean mirror (DEC-008)._
 
 ## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
 

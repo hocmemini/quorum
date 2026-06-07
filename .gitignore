@@ -43,7 +43,8 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# --- Audit raw dumps (account-specific; never for a public repo) ---
+# --- Account-specific / operational detail (never for a public repo) — DEC-008 ---
+docs/private/
 docs/*-raw.txt
 scripts/*.out
 

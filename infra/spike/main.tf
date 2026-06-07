@@ -62,6 +62,7 @@ resource "aws_iam_policy" "dsql_connect" {
 }
 
 resource "aws_iam_user_policy_attachment" "dsql_connect" {
+  count      = var.connect_user != "" ? 1 : 0
   user       = var.connect_user
   policy_arn = aws_iam_policy.dsql_connect.arn
 }

@@ -5,7 +5,7 @@ the bucket every other stack uses for remote state.
 
 Creates (Phase 3):
 
-- `h0-quorum-tfstate-260289091534` — versioned, SSE, TLS-only bucket policy. Remote-state
+- `h0-quorum-tfstate-<accountid>` — versioned, SSE, TLS-only bucket policy. Remote-state
   backend for all other stacks (`backend "s3"` with `use_lockfile = true` — native S3
   locking, **no DynamoDB lock table**).
 - SNS alerts topic + email subscription.

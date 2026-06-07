@@ -2,4 +2,4 @@ aws_profile      = "h0"
 primary_region   = "us-east-1"
 secondary_region = "us-east-2"
 witness_region   = "us-west-2"
-connect_user     = "h0-deploy"
+connect_user     = "your-iam-username" # the IAM user that runs the spike (real value goes in gitignored terraform.tfvars)

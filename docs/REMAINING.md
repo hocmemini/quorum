@@ -38,7 +38,7 @@ aws configure set aws_secret_access_key <NEW_SECRET> --profile h0
 ### A1 — Budgets ($20) — PERMANENT guardrail, do NOT delete
 
 ```sh
-ACCT=260289091534
+ACCT=$(aws sts get-caller-identity --query Account --output text)
 aws budgets describe-budgets --account-id $ACCT --query 'Budgets[].BudgetName' --output text
 # If no ~$20 budget exists, create one (matches infra/bootstrap spec so TF can import/replace):
 cat > /tmp/h0-budget.json <<'JSON'
@@ -179,7 +179,7 @@ deactivate IAM users/keys before deleting. Log every command to PROVENANCE.
 ### B3 — Phase 3 AWS scaffold  [gated on approval + needs your alert email]
 - Account-level S3 Block Public Access.
 - `infra/bootstrap` Terraform (state local + gitignored): tfstate bucket
-  `h0-quorum-tfstate-260289091534` (versioned, SSE, TLS-only policy); SNS topic + email
+  `h0-quorum-tfstate-<accountid>` (versioned, SSE, TLS-only policy); SNS topic + email
   subscription; `$20` monthly budget @ 50/80/100% → SNS; CloudWatch billing alarm **iff**
   "Receive Billing Alerts" is enabled. Reconcile with the A1 budget (import or replace).
 

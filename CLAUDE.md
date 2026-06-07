@@ -5,7 +5,7 @@ This file is loaded into every Claude Code session. The decisions below are **lo
 do not relitigate them; implement against them.
 
 ## Platform & access
-- **AWS profile:** `h0` (`AWS_PROFILE=h0`). Account `260289091534`.
+- **AWS profile:** `h0` (`AWS_PROFILE=h0`). Account ID kept in `docs/private/` (out of this public-bound file).
 - **Regions:** `us-east-1` + `us-east-2` active; `us-west-2` witness.
 - **Destructive operations always require explicit user approval** — deleting/modifying AWS
   resources, dropping/altering data, rewriting git history. Read-only by default.
@@ -51,4 +51,4 @@ do not relitigate them; implement against them.
   **no DynamoDB lock table**). The `infra/bootstrap` stack keeps its own state **local and
   gitignored** (chicken-and-egg).
 
-See `docs/PROVENANCE.md` (action log) and `docs/AUDIT.md` (account audit).
+See `docs/PROVENANCE.md` (action log) and `docs/private/AUDIT.md` (account audit).

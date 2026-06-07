@@ -24,6 +24,6 @@ variable "witness_region" {
 
 variable "connect_user" {
   type        = string
-  default     = "h0-deploy"
-  description = "IAM user that runs the spike and obtains DSQL admin auth tokens."
+  default     = ""
+  description = "IAM user to attach the DSQL connect policy to. Set in a gitignored terraform.tfvars; empty skips the attachment so no IAM username lives in the public repo."
 }
