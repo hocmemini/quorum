@@ -288,10 +288,13 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - **DEC-004 (2026-06-06): Event-sourced, append-only data model.** Rationale: append-only inserts to random UUID keys make OCC contention near zero, which turns DSQL's concurrency model from a fight into a non-event, and the timeline is the audit log. Project on read; skip the materialized projection unless time allows.
 - **DEC-005 (2026-06-06): Idempotency via UUID primary key as the idempotency key.** Rationale: removes the dependency on unconfirmed ON CONFLICT behavior. Duplicate delivery collides on the PK and is treated as success; OCC errors are retried.
 - **DEC-006 (2026-06-06): Failover spike goes into the monorepo as WP-0, not a throwaway repo.** Rationale: if the spike proves the thesis, the proven code carries forward into the final project.
+- **DEC-007 (2026-06-07): WP-0 spike uses raw node-postgres; DEC-003 (Kysely) applies to the production data layer only.** Rationale: the spike validates infrastructure with minimum variables, and Kysely wraps the same pg driver, so the connection, token, and OCC retry code carry forward unchanged. Sequencing, not drift.
+- **DEC-008 (2026-06-07): `docs/` is public-safe by default; `docs/private/` (gitignored) holds operational detail** — AUDIT.md, account identifiers, IAM names, spend figures. PROVENANCE.md records actions but redacts account-specific identifiers. The public flip requires a redaction review, or ships as a clean mirror with the private original retained as verification canon (history already contains earlier identifiers; we do not rewrite it).
 
 **11.2 Change log.** One line per material change to the plan. Date, what changed, why.
 
 - 2026-06-06: Document created. Initial scope, architecture, and schedule locked.
+- 2026-06-07: WP-0 spike built and validated locally (infra/spike + packages/spike-failover; terraform validate, strict tsc, 10/10 unit tests). AWS apply/run deferred on the account verification window. Added DEC-007 (raw pg for the spike) and DEC-008 (docs/ public-safe, docs/private/ for operational detail; AUDIT.md moved, PROVENANCE redacted). SOW relocated to docs/SOW.md.
 
 ---
 
