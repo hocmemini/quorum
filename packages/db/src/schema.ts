@@ -5,7 +5,7 @@ type Jsonb = ColumnType<Record<string, unknown>, string, string>;
 
 /** OSM-informed catalog of monitored services. */
 export interface ServiceTable {
-  service_id: string; // uuid, app-supplied (random v4 — write distribution)
+  service_id: string; // uuid, app-supplied (random v4 - write distribution)
   name: string;
   tier: string | null;
   metadata: Jsonb;

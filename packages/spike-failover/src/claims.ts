@@ -48,12 +48,12 @@ async function readRunIds(
   return new Set(rows.map((r) => r.event_id));
 }
 
-/** Claim 1 — strong consistency: write via region A, immediately read via region B (no polling). */
+/** Claim 1 - strong consistency: write via region A, immediately read via region B (no polling). */
 export async function claimStrongConsistency(
   client: FailoverClient,
   runId: string,
 ): Promise<ClaimResult> {
-  const name = 'Strong consistency (write A → read B)';
+  const name = 'Strong consistency (write A -> read B)';
   const [a, b] = client.regions();
   if (a === undefined || b === undefined) {
     return { id: 'C1', name, pass: false, detail: 'need two regions' };
@@ -76,7 +76,7 @@ export async function claimStrongConsistency(
   };
 }
 
-/** Claim 2 — active-active: concurrent writes from both endpoints, full set readable from both. */
+/** Claim 2 - active-active: concurrent writes from both endpoints, full set readable from both. */
 export async function claimActiveActive(
   client: FailoverClient,
   runId: string,
@@ -114,7 +114,7 @@ export async function claimActiveActive(
   };
 }
 
-/** Claim 3 — survival: kill region A, write+read via B, restore A, assert it caught up. */
+/** Claim 3 - survival: kill region A, write+read via B, restore A, assert it caught up. */
 export async function claimSurvival(client: FailoverClient, runId: string): Promise<ClaimResult> {
   const name = 'Region-failure survival';
   const [a, b] = client.regions();
@@ -128,7 +128,7 @@ export async function claimSurvival(client: FailoverClient, runId: string): Prom
     { region: a },
   );
 
-  // Outage: A unreachable — writes/reads must transparently fail over to B.
+  // Outage: A unreachable - writes/reads must transparently fail over to B.
   client.markUnreachable(a);
   const outageIds: string[] = [];
   for (let i = 0; i < 5; i += 1) {

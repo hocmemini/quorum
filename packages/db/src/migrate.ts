@@ -7,7 +7,7 @@ import { isUniqueViolation, withOccRetry } from './occ';
 
 /**
  * Split a migration file into individual statements. By contract each statement is a single
- * DDL; authors separate statements with a line containing only `--;`. We do not parse SQL —
+ * DDL; authors separate statements with a line containing only `--;`. We do not parse SQL -
  * boundaries are explicit.
  */
 export function splitStatements(sql: string): string[] {
@@ -31,7 +31,7 @@ async function runOneStatementTxn(pool: Pool, statement: string): Promise<void> 
   await withOccRetry(async () => {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN'); // Repeatable Read is the DSQL default — never SET it
+      await client.query('BEGIN'); // Repeatable Read is the DSQL default - never SET it
       await client.query(statement);
       await client.query('COMMIT');
     } catch (e) {
@@ -51,7 +51,7 @@ async function recordApplied(pool: Pool, name: string, checksum: string): Promis
         checksum,
       ]);
     } catch (e) {
-      if (isUniqueViolation(e)) return; // already recorded — success
+      if (isUniqueViolation(e)) return; // already recorded - success
       throw e;
     }
   });

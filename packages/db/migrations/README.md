@@ -8,7 +8,7 @@ Hand-authored SQL only. Filenames sort lexicographically and run in that order, 
 - **One DDL statement per transaction**, one explicit `COMMIT` each. The runner wraps every
   statement in its own `BEGIN`/`COMMIT`.
 - Separate statements within a file with a line containing **only** `--;`.
-- **`CREATE INDEX ASYNC` only** — never a synchronous index build.
+- **`CREATE INDEX ASYNC` only**, never a synchronous index build.
 - **No foreign keys, no sequences.** UUID v4 primary keys (`gen_random_uuid()`); integrity
   is enforced in the application layer.
 - Isolation is **Repeatable Read** and is never changed.

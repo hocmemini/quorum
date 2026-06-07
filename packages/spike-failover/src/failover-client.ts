@@ -103,7 +103,7 @@ export class FailoverClient {
     );
   }
 
-  /** READ — never wrapped in OCC. `region` pins to one endpoint; omit for ordered failover. */
+  /** READ - never wrapped in OCC. `region` pins to one endpoint; omit for ordered failover. */
   async read<R = Record<string, unknown>>(
     sql: string,
     params: readonly unknown[] = [],
@@ -116,7 +116,7 @@ export class FailoverClient {
     return { rows: value, region };
   }
 
-  /** WRITE — wrapped in OCC retry on 40001. `region` pins; omit for ordered failover. */
+  /** WRITE - wrapped in OCC retry on 40001. `region` pins; omit for ordered failover. */
   async write(
     sql: string,
     params: readonly unknown[] = [],

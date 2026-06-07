@@ -5,7 +5,7 @@ WP-0 claims (strong consistency, active-active, failover-survival) + cross-regio
 against the live cluster and emits CloudWatch metrics (`Quorum/DSQLMonitor`), with alarms on
 claim failure or latency regression. Continuous validation, no manual runs.
 
-## Apply (after the app DSQL cluster exists — WP-8)
+## Apply (after the app DSQL cluster exists, WP-8)
 
 ```sh
 export AWS_PROFILE=h0
@@ -16,6 +16,7 @@ terraform -chdir=infra/monitor apply
 ```
 
 ## Notes
+
 - Writes to an isolated `spike_event` probe table in the target cluster (not the app tables).
 - Schedule defaults to `rate(6 hours)`; tune `schedule_expression`.
 - Set `alarm_sns_topic_arn` to the Phase-3 SNS topic to route alarms to email.

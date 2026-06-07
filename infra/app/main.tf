@@ -7,7 +7,7 @@ locals {
 }
 
 # Production multi-Region DSQL: two peered clusters (us-east-1 + us-east-2) sharing one witness
-# (us-west-2) — the same pattern WP-0 proved, with deletion protection ON. Resource names
+# (us-west-2) - the same pattern WP-0 proved, with deletion protection ON. Resource names
 # verified against hashicorp/aws v6.49.
 resource "aws_dsql_cluster" "primary" {
   deletion_protection_enabled = var.deletion_protection

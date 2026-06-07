@@ -96,7 +96,7 @@ describe('FailoverClient', () => {
       occ: { baseDelayMs: 0, maxDelayMs: 0 },
     });
     const { region } = await client.write('INSERT INTO t VALUES (1)');
-    expect(region).toBe('us-east-1'); // stayed on primary — 40001 is not a failover trigger
+    expect(region).toBe('us-east-1'); // stayed on primary - 40001 is not a failover trigger
     expect(attempts).toBe(3);
   });
 

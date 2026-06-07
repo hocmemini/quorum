@@ -1,10 +1,10 @@
-# Quorum — Consolidated Remaining Work
+# Quorum, Consolidated Remaining Work
 
 **Status (2026-06-07): AWS auth works** with `AWS_PROFILE=h0`. The earlier "verification
-window blocking everything" was a misdiagnosis — unqualified calls had fallen back to a stale
+window blocking everything" was a misdiagnosis, unqualified calls had fallen back to a stale
 `default` profile (see PROVENANCE). Core services (DSQL, EC2, RDS, Lambda, S3, IAM, DynamoDB)
 all work and are empty; a few non-core services (Redshift, Kinesis, MSK, App Runner, FSx)
-return `SubscriptionRequired` — a narrow new-account subscription state, none of which we use.
+return `SubscriptionRequired`, a narrow new-account subscription state, none of which we use.
 Phase 1 audit is **done** (`docs/private/AUDIT.md`); the items below create resources and need
 your go-ahead / operator action. Always run with `AWS_PROFILE=h0`.
 
@@ -15,13 +15,13 @@ in the credits pass **except the budget**; log each action to `docs/PROVENANCE.m
 
 ---
 
-## 0. Precondition — auth gate
+## 0. Precondition, auth gate
 
 ```sh
 export AWS_PROFILE=h0
 aws ec2 describe-regions --region us-east-1 >/dev/null 2>&1 \
-  && echo "AUTH OK — proceed" \
-  || echo "STILL BLOCKED — wait and retry later"
+  && echo "AUTH OK, proceed" \
+  || echo "STILL BLOCKED, wait and retry later"
 ```
 
 If it's still blocked **and** you rotated the key, reconfigure first (never echo the secret):
@@ -38,7 +38,7 @@ aws configure set aws_secret_access_key <NEW_SECRET> --profile h0
 > **Truth source:** the console **Explore AWS / "Get started"** panel. After running these,
 > wait a few hours; any activity still **Not started** must be redone manually in the console.
 
-### A1 — Budgets ($20) — PERMANENT guardrail, do NOT delete
+### A1, Budgets ($20), PERMANENT guardrail, do NOT delete
 
 ```sh
 ACCT=$(aws sts get-caller-identity --query Account --output text)
@@ -49,12 +49,13 @@ cat > /tmp/h0-budget.json <<'JSON'
 JSON
 aws budgets create-budget --account-id $ACCT --budget file:///tmp/h0-budget.json
 ```
-Notifications (50/80/100%) need a subscriber (SNS/email) — add them when `infra/bootstrap`
+
+Notifications (50/80/100%) need a subscriber (SNS/email), add them when `infra/bootstrap`
 lands, or with `--notifications-with-subscribers`. **Overlap:** if bootstrap later manages the
 budget, `terraform import aws_budgets_budget.this $ACCT:h0-monthly-20` (or delete this CLI
 budget first) to avoid a duplicate.
 
-### A2 — Lambda web app ($20) — ephemeral
+### A2, Lambda web app ($20), ephemeral
 
 ```sh
 ROLE_ARN=$(aws iam create-role --role-name h0-credits-lambda \
@@ -92,7 +93,7 @@ aws iam detach-role-policy --role-name h0-credits-lambda \
 aws iam delete-role --role-name h0-credits-lambda
 ```
 
-### A3 — EC2 t3.micro ($20) — ephemeral
+### A3, EC2 t3.micro ($20), ephemeral
 
 ```sh
 AMI=$(aws ssm get-parameter \
@@ -115,10 +116,10 @@ aws ec2 terminate-instances --instance-ids "$IID"
 aws ec2 wait instance-terminated --instance-ids "$IID"
 ```
 
-### A4 — RDS PostgreSQL db.t4g.micro ($20) — ephemeral, slow (~15 min)
+### A4, RDS PostgreSQL db.t4g.micro ($20), ephemeral, slow (~15 min)
 
 ```sh
-# throwaway master password — in memory only, never echoed/stored
+# throwaway master password, in memory only, never echoed/stored
 PW=$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | cut -c1-20)
 aws rds create-db-instance --db-instance-identifier h0-credits-pg \
   --engine postgres --db-instance-class db.t4g.micro \
@@ -136,7 +137,7 @@ aws rds wait db-instance-deleted --db-instance-identifier h0-credits-pg
 aws rds describe-db-snapshots --query 'DBSnapshots[?DBInstanceIdentifier==`h0-credits-pg`].DBSnapshotIdentifier' --output text
 ```
 
-### A5 — Bedrock ($20) — best-effort CLI, manual fallback
+### A5, Bedrock ($20), best-effort CLI, manual fallback
 
 ```sh
 aws bedrock list-foundation-models --region us-east-1 \
@@ -146,11 +147,12 @@ aws bedrock-runtime converse --region us-east-1 --model-id amazon.nova-micro-v1:
   --inference-config 'maxTokens=10' --query 'output.message.content[0].text' --output text
 # AccessDenied / no model available without an access request -> skip, do the manual step.
 ```
+
 **Manual fallback (2 min, guarantees the credit):** Console → **Bedrock** → region
 **us-east-1** → **Playgrounds → Chat** → select any available model → send one short
 message.
 
-### A6 — Verification sweep (zero ephemeral residue)
+### A6, Verification sweep (zero ephemeral residue)
 
 ```sh
 aws ec2 describe-instances --filters Name=tag:Project,Values=h0-credits \
@@ -167,7 +169,8 @@ aws iam get-role --role-name h0-credits-lambda 2>&1 | grep -q NoSuchEntity && ec
 
 ## B. Previous-run deferred work (pre-spike prep)
 
-### B1 — Phase 1 account audit (read-only) → fill `docs/AUDIT.md`
+### B1, Phase 1 account audit (read-only) → fill `docs/AUDIT.md`
+
 - §1 spend: the two Cost Explorer calls (commands in AUDIT.md).
 - §2 sweep: `AWS_PROFILE=h0 scripts/audit-sweep.sh | tee docs/sweep-2026-06-07-raw.txt`.
 - §3 IAM hygiene: `get-account-summary`, credential report, role trust/admin scan,
@@ -175,11 +178,13 @@ aws iam get-role --role-name h0-credits-lambda 2>&1 | grep -q NoSuchEntity && ec
 - Produce the **KILL LIST / KEEP LIST**, then **STOP for line-item approval**.
 - (DSQL multi-region trio `us-east-1`+`us-east-2`+`us-west-2`-witness already confirmed via docs.)
 
-### B2 — Phase 2 cleanup  [gated on B1 approval]
+### B2, Phase 2 cleanup  [gated on B1 approval]
+
 Delete only approved kill-list items, one at a time; snapshot/export stateful resources first;
 deactivate IAM users/keys before deleting. Log every command to PROVENANCE.
 
-### B3 — Phase 3 AWS scaffold  [gated on approval + needs your alert email]
+### B3, Phase 3 AWS scaffold  [gated on approval + needs your alert email]
+
 - Account-level S3 Block Public Access.
 - `infra/bootstrap` Terraform (state local + gitignored): tfstate bucket
   `h0-quorum-tfstate-<accountid>` (versioned, SSE, TLS-only policy); SNS topic + email

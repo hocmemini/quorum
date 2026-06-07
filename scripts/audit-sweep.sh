@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# scripts/audit-sweep.sh — READ-ONLY sweep for billable / silent-biller AWS resources.
+# scripts/audit-sweep.sh - READ-ONLY sweep for billable / silent-biller AWS resources.
 #
 # Enumerates resource classes that cost money while they exist across every ENABLED region,
-# then global services. Only describe/list/get calls — it never creates, modifies, or
+# then global services. Only describe/list/get calls - it never creates, modifies, or
 # deletes anything.
 #
 # Usage:
@@ -48,7 +48,7 @@ q() {
 }
 
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text 2>/dev/null || echo UNKNOWN)"
-hr "ACCOUNT ${ACCOUNT}  —  audit sweep  $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+hr "ACCOUNT ${ACCOUNT}  -  audit sweep  $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 if [ -n "$ONLY_REGION" ]; then
   REGIONS="$ONLY_REGION"
@@ -117,7 +117,7 @@ sweep_region() {
   q "CW custom dashboards"        aws cloudwatch list-dashboards --region "$r" --query 'DashboardEntries[].DashboardName'
   q "SES identities (v2)"         aws sesv2 list-email-identities --region "$r" --query 'EmailIdentities[].[IdentityName,IdentityType]'
 
-  # KMS customer-managed keys ($1/mo each) — list, then classify per key.
+  # KMS customer-managed keys ($1/mo each) - list, then classify per key.
   local keys cmk=""
   keys="$(aws kms list-keys --region "$r" --query 'Keys[].KeyId' --output text 2>/dev/null)"
   if [ -n "${keys// /}" ]; then

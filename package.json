@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Incident command plane on Aurora DSQL (multi-region) — H0 hackathon",
+  "description": "Incident command plane on Aurora DSQL (multi-region) - H0 hackathon",
   "packageManager": "pnpm@11.5.2",
   "engines": {
     "node": ">=22",
@@ -15,11 +15,17 @@
     "format": "biome format --write .",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint:md": "markdownlint-cli2",
+    "lint:spell": "cspell --no-progress \"**/*.{md,ts}\"",
+    "lint:deps": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@types/node": "^22.0.0",
+    "cspell": "^10.0.1",
+    "knip": "^6.16.1",
+    "markdownlint-cli2": "^0.22.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"

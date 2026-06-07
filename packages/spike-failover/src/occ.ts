@@ -19,7 +19,7 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 
 /**
  * Optimistic concurrency control: retry a WRITE on SQLSTATE 40001 with exponential backoff +
- * full jitter. DSQL reads never conflict — never wrap them (see CLAUDE.md).
+ * full jitter. DSQL reads never conflict - never wrap them (see CLAUDE.md).
  */
 export async function withOccRetry<T>(fn: () => Promise<T>, opts: OccOptions = {}): Promise<T> {
   const maxAttempts = opts.maxAttempts ?? 10;

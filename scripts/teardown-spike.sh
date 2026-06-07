@@ -16,4 +16,4 @@ printf '[iam] spike connect policy: '
 aws iam list-policies --scope Local \
   --query "Policies[?PolicyName=='quorum-spike-dsql-connect'].Arn" --output text 2>&1 || true
 
-echo "done — anything listed above (besides errors) needs manual cleanup."
+echo "done - anything listed above (besides errors) needs manual cleanup."

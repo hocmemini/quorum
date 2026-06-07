@@ -1,0 +1,13 @@
+{
+  // Editorial pass config (WP-12). Prose-friendly: long lines and intentional
+  // <placeholder> angle-bracket syntax are allowed.
+  "config": {
+    "MD013": false,
+    "MD033": false,
+    "MD041": false,
+    "MD024": { "siblings_only": true },
+    "MD060": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "docs/private/**", "**/dist/**"]
+}

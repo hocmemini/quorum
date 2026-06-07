@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Block commits that introduce secrets (gitleaks). This repo goes public later — no secret
+# Block commits that introduce secrets (gitleaks). This repo goes public later - no secret
 # may ever enter history. Enable with: scripts/setup-hooks.sh
 set -euo pipefail
 
@@ -8,7 +8,7 @@ if [ -z "$GITLEAKS" ] && [ -x "$HOME/.local/bin/gitleaks" ]; then
   GITLEAKS="$HOME/.local/bin/gitleaks"
 fi
 if [ -z "$GITLEAKS" ]; then
-  echo "pre-commit: gitleaks not installed — run scripts/install-gitleaks.sh" >&2
+  echo "pre-commit: gitleaks not installed - run scripts/install-gitleaks.sh" >&2
   exit 1
 fi
 

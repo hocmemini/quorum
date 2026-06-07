@@ -4,7 +4,7 @@ import type { PoolConfig } from 'pg';
 import { Pool } from 'pg';
 
 /**
- * Aurora DSQL connection facts (LOCKED — see CLAUDE.md):
+ * Aurora DSQL connection facts (LOCKED - see CLAUDE.md):
  *  - Port 5432, TLS required.
  *  - The libpq password is a short-lived IAM token (`@aws-sdk/dsql-signer`).
  *  - Generate a token per connection; cache it with a TTL so we don't re-sign on every

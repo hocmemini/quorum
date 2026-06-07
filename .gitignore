@@ -10,7 +10,7 @@ out/
 *.zip
 *.tsbuildinfo
 
-# --- Environment & secrets (repo goes public later — be strict) ---
+# --- Environment & secrets (repo goes public later - be strict) ---
 .env
 .env.*
 !.env.example
@@ -45,7 +45,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# --- Account-specific / operational detail (never for a public repo) — DEC-008 ---
+# --- Account-specific / operational detail (never for a public repo) - DEC-008 ---
 docs/private/
 docs/*-raw.txt
 scripts/*.out

@@ -1,4 +1,4 @@
-# gitleaks config — extends the built-in ruleset. Repo goes public later: keep this strict.
+# gitleaks config - extends the built-in ruleset. Repo goes public later: keep this strict.
 title = "Quorum gitleaks config"
 
 [extend]

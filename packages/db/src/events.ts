@@ -32,7 +32,7 @@ export async function appendEvent(
   });
 }
 
-/** Read an incident's event stream in order. READ path — never OCC-wrapped (CLAUDE.md). */
+/** Read an incident's event stream in order. READ path - never OCC-wrapped (CLAUDE.md). */
 export function readIncidentEvents(
   db: Kysely<Database>,
   incidentId: string,

@@ -7,7 +7,7 @@ the spike runner obtain DSQL admin auth tokens.
 **Verified against `hashicorp/aws` v6.49 provider schema (2026-06):** resources are
 `aws_dsql_cluster` (with `multi_region_properties { witness_region }`) and
 `aws_dsql_cluster_peering` (`identifier`, `clusters`, `witness_region`). The region trio is
-the AWS-documented supported US set. State is **local and ephemeral** — no S3 backend.
+the AWS-documented supported US set. State is **local and ephemeral**, no S3 backend.
 
 ## Apply (once AWS auth clears)
 
@@ -32,6 +32,7 @@ scripts/teardown-spike.sh        # terraform destroy + verification sweep
 ```
 
 ## Notes
+
 - `deletion_protection_enabled = false` so the ephemeral spike destroys cleanly.
 - Endpoints: `<identifier>.dsql.<region>.on.aws` (witness has no endpoint).
 - DSQL free tier scales to zero when idle; teardown still recommended.

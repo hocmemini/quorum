@@ -53,7 +53,7 @@ function printTable(results: ClaimResult[], latency: LatencyStats): void {
     console.log(`         |    |   ${r.detail}`);
   }
   console.log(
-    `\n  cross-region write latency: median ${latency.medianMs} ms · p99 ${latency.p99Ms} ms (n=${latency.samples})`,
+    `\n  cross-region write latency: median ${latency.medianMs} ms - p99 ${latency.p99Ms} ms (n=${latency.samples})`,
   );
   console.log(`\n  OVERALL: ${results.every((r) => r.pass) ? 'PASS' : 'FAIL'}\n`);
 }
@@ -66,9 +66,9 @@ async function writeReport(
   allPass: boolean,
 ): Promise<void> {
   const lines = [
-    '# Spike Results — WP-0 Aurora DSQL multi-region failover',
+    '# Spike Results - WP-0 Aurora DSQL multi-region failover',
     '',
-    `- **Run:** ${new Date().toISOString()} · run_id \`${runId}\``,
+    `- **Run:** ${new Date().toISOString()} - run_id \`${runId}\``,
     `- **Regions:** ${regions.join(' + ')} (witness us-west-2)`,
     `- **Overall:** ${allPass ? 'PASS' : 'FAIL'}`,
     '',
@@ -76,7 +76,7 @@ async function writeReport(
     '|--------|----|-------|--------|',
     ...results.map((r) => `| ${r.pass ? 'PASS' : 'FAIL'} | ${r.id} | ${r.name} | ${r.detail} |`),
     '',
-    `**Cross-region write latency:** median ${latency.medianMs} ms · p99 ${latency.p99Ms} ms · n=${latency.samples}`,
+    `**Cross-region write latency:** median ${latency.medianMs} ms - p99 ${latency.p99Ms} ms - n=${latency.samples}`,
     '',
   ];
   const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'SPIKE_RESULTS.md');

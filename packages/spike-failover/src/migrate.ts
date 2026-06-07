@@ -21,7 +21,7 @@ export function splitStatements(sql: string): string[] {
 /** Run one DDL statement in its own explicit transaction with a single COMMIT (DSQL rule). */
 async function runDdl(client: FailoverClient, region: string, statement: string): Promise<void> {
   await client.withClient(region, async (conn) => {
-    await conn.query('BEGIN'); // Repeatable Read is the DSQL default — never SET it
+    await conn.query('BEGIN'); // Repeatable Read is the DSQL default - never SET it
     try {
       await conn.query(statement);
       await conn.query('COMMIT');

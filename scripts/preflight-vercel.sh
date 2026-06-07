@@ -31,7 +31,7 @@ fi
 # 4) The session must be the expected account, not the production one.
 expected=$(printf '%s' "$VERCEL_EXPECTED_ACCOUNT" | tr -d '[:space:]')
 if [ "$actual" != "$expected" ]; then
-  fail "Wrong Vercel account: logged in as '$actual', expected '$expected'. This may be the PRODUCTION account — do NOT proceed."
+  fail "Wrong Vercel account: logged in as '$actual', expected '$expected'. This may be the PRODUCTION account - do NOT proceed."
 fi
 
-printf 'vercel preflight OK — account: %s\n' "$actual"
+printf 'vercel preflight OK - account: %s\n' "$actual"

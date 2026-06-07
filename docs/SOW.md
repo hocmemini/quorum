@@ -1,6 +1,6 @@
 # Statement of Work: Project Quorum
 
-**Hackathon:** H0 — Hack the Zero Stack (AWS Databases + Vercel v0)
+**Hackathon:** H0, Hack the Zero Stack (AWS Databases + Vercel v0)
 **Track:** Monetizable B2B App
 **Owner:** Jonathan Piccirilli
 **Document status:** Living. Update the Decision Log and Change Log on every material change.
@@ -14,6 +14,7 @@
 This is the single source of truth for the project. It exists to do three jobs: let you speak to any point of the plan when it changes, track the provenance of every decision, and seed the final handoff documentation.
 
 Conventions:
+
 - Every section and work item is numbered so it can be referenced directly (for example, "WP-3" or "DEC-004").
 - When the plan changes, do two things: edit the affected section, and append a one-line entry to the Change Log (Section 11.2) with the date and the reason. Do not silently overwrite. The diff history in git is the provenance record.
 - Keep this file in the monorepo at `/docs/SOW.md` and commit it alongside code changes so decisions and the work that implemented them share a timeline.
@@ -39,6 +40,7 @@ Conventions:
 **2.2 Secondary objective:** Produce work that stands on its technical merit. This shapes priorities: optimize the demo and the write-ups for rigor and credible data-layer reasoning rather than raw scale numbers.
 
 **2.3 Definition of done:**
+
 - A working, reachable full-stack app on Aurora DSQL multi-region plus Vercel.
 - A demo video under three minutes that frames the problem and shows the region-failure proof.
 - All required submission artifacts complete (Section 6.1).
@@ -50,6 +52,7 @@ Conventions:
 ## 3. Scope
 
 **3.1 In scope:**
+
 - Incident auto-creation from a real CloudWatch alarm.
 - Append-only incident timeline.
 - Action items, created and assigned as events.
@@ -60,6 +63,7 @@ Conventions:
 - Seed data so a judge clicking the live link sees a real incident.
 
 **3.2 Explicitly out of scope (cut to fit the window, stated so a judge knows it was deliberate):**
+
 - Role-based access control and SSO.
 - Escalation and paging policies.
 - Slack, PagerDuty, or other third-party integrations.
@@ -84,6 +88,7 @@ This section records the locked technical decisions. Rationale lives in the Deci
 - **Infrastructure as code:** Terraform for the DSQL cluster and witness, IAM, the ingestion path, the chaos harness, and the budget alarm.
 
 **DSQL constraints that shape the build (verified against AWS docs 2026-06-06):**
+
 - Isolation is fixed at Repeatable Read (snapshot). It cannot be changed.
 - No foreign keys. Referential integrity is application-layer. JOINs and relationships work.
 - No PL/pgSQL, no triggers, no temporary tables, no TRUNCATE.
@@ -138,6 +143,9 @@ Scripts to seed one realistic incident for idle judging, batched under the 3,000
 **WP-11. Tests.** Owner CC.
 Unit tests for retry and idempotency, an integration test proving a conflict retries and a duplicate dedupes, an ingestion smoke test.
 
+**WP-12. Editorial and hygiene pass (gate, runs twice).** Owner CC, approvals by JP.
+Reusable repo-wide pass per the editorial prompt: unicode and homoglyph sweep, DEC-008 identifier and secret compliance, code and prose editorial with voice pass, link and Mermaid checks, fresh-clone build gate. Runs in MODE=pre-submission as a Phase 5 gate before the Jun 29 deadline, and again in MODE=public-flip after judging closes, where it additionally produces the full-history redaction-review report, the LICENSE, and the public README draft. Mechanical fixes auto-apply; deletions, rewrites, the license name string, and the redaction decision are JP approvals. Output: docs/EDITORIAL-<date>-<mode>.md.
+
 ---
 
 ## 6. Deliverables
@@ -176,28 +184,29 @@ Each content piece must be public, not unlisted, include language stating it was
 
 Anchored to 2026-06-06 (Saturday). Submission deadline 2026-06-29, 5:00pm PDT. Approximately 23 days.
 
-**Phase 0 — Setup and de-risk. Jun 6 to Jun 9.**
+**Phase 0, Setup and de-risk. Jun 6 to Jun 9.**
 Register, set up the AWS account, request credits, scaffold the repo, make the first safe commit, then build WP-0. Go/no-go gate by end of Jun 9.
 
-**Phase 1 — Core data plane. Jun 10 to Jun 14.**
+**Phase 1, Core data plane. Jun 10 to Jun 14.**
 WP-2, WP-3, WP-4, WP-5, and WP-8. The plane works for a single workflow across two regions.
 
-**Phase 2 — Frontend, ingestion, chaos. Jun 15 to Jun 20.**
+**Phase 2, Frontend, ingestion, chaos. Jun 15 to Jun 20.**
 WP-6, WP-7, WP-9. The UI is usable and chaos generates real incidents.
 
-**Phase 3 — Integration and resilience demo. Jun 21 to Jun 23.**
+**Phase 3, Integration and resilience demo. Jun 21 to Jun 23.**
 End-to-end flow, WP-10 seed data, WP-11 tests, and the region-failure proof dialed in and repeatable.
 
-**Phase 4 — Documentation, video, content. Jun 24 to Jun 27.**
+**Phase 4, Documentation, video, content. Jun 24 to Jun 27.**
 Record the demo, finalize and publish D-7 through D-9, complete D-2 and D-5.
 
-**Phase 5 — Final and submit. Jun 28 to Jun 29.**
+**Phase 5, Final and submit. Jun 28 to Jun 29.**
 Final deploy, capture D-6 screenshots, grab the Vercel Team ID, submit before 5:00pm PDT on Jun 29.
 
 **Post-submission. Jun 30 to Jul 24.**
 Keep the plane reachable and idle for judging. Winners announced on or around Jul 31.
 
 **7.1 Hard deadlines and checkpoints:**
+
 - **Jun 9:** WP-0 failover spike go/no-go. The single most important gate.
 - **Jun 26, 12:00pm PT:** AWS and v0 credit request form deadline. Do this in Phase 0; this date is only the backstop.
 - **Jun 29, 5:00pm PDT:** Submission deadline. No changes accepted after.
@@ -289,21 +298,22 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - **DEC-005 (2026-06-06): Idempotency via UUID primary key as the idempotency key.** Rationale: removes the dependency on unconfirmed ON CONFLICT behavior. Duplicate delivery collides on the PK and is treated as success; OCC errors are retried.
 - **DEC-006 (2026-06-06): Failover spike goes into the monorepo as WP-0, not a throwaway repo.** Rationale: if the spike proves the thesis, the proven code carries forward into the final project.
 - **DEC-007 (2026-06-07): WP-0 spike uses raw node-postgres; DEC-003 (Kysely) applies to the production data layer only.** Rationale: the spike validates infrastructure with minimum variables, and Kysely wraps the same pg driver, so the connection, token, and OCC retry code carry forward unchanged. Sequencing, not drift.
-- **DEC-008 (2026-06-07): `docs/` is public-safe by default; `docs/private/` (gitignored) holds operational detail** — AUDIT.md, account identifiers, IAM names, spend figures. PROVENANCE.md records actions but redacts account-specific identifiers. The public flip requires a redaction review, or ships as a clean mirror with the private original retained as verification canon (history already contains earlier identifiers; we do not rewrite it).
+- **DEC-008 (2026-06-07): `docs/` is public-safe by default; `docs/private/` (gitignored) holds operational detail**, AUDIT.md, account identifiers, IAM names, spend figures. PROVENANCE.md records actions but redacts account-specific identifiers. The public flip requires a redaction review, or ships as a clean mirror with the private original retained as verification canon (history already contains earlier identifiers; we do not rewrite it).
 - **DEC-009 (2026-06-07): The hackathon Vercel account is CLI-deploy only, no Git provider connection.** Rationale: the owner's GitHub identity is login-bound to a separate production Vercel account, and login connections are one-to-one, so connecting it would risk lockout or auto-deploy breakage on the production property. Deploys via `vercel link` and `vercel deploy`; a `vercel whoami` scope check precedes every deploy.
-- **DEC-010 (2026-06-07): WP-2 concrete schema.** Tables `service`, `signal`, `incident`, `incident_event` (`incident_projection` deferred — project-on-read per DEC-004). UUID v4 PKs are **app-supplied** (random, write-distributed); `event_id` is PK + idempotency key (DEC-005). **No foreign keys** (app-layer integrity); `incident_event.type` is free text with a documented vocabulary, not a CHECK constraint. Event order = `(created_at, event_id)`. Indexes via `CREATE INDEX ASYNC`: `signal(service_id)`, `incident(created_at)`, `incident_event(incident_id, created_at)`. `gen_random_uuid()` defaults deliberately avoided until confirmed on DSQL.
+- **DEC-010 (2026-06-07): WP-2 concrete schema.** Tables `service`, `signal`, `incident`, `incident_event` (`incident_projection` deferred, project-on-read per DEC-004). UUID v4 PKs are **app-supplied** (random, write-distributed); `event_id` is PK + idempotency key (DEC-005). **No foreign keys** (app-layer integrity); `incident_event.type` is free text with a documented vocabulary, not a CHECK constraint. Event order = `(created_at, event_id)`. Indexes via `CREATE INDEX ASYNC`: `signal(service_id)`, `incident(created_at)`, `incident_event(incident_id, created_at)`. `gen_random_uuid()` defaults deliberately avoided until confirmed on DSQL.
 - **DEC-011 (2026-06-07): Automated DSQL monitor.** A scheduled Lambda (`functions/dsql-monitor`, EventBridge cron) reuses the WP-0 spike claims to validate strong consistency, active-active, and failover-survival, plus cross-region write latency, against the live cluster on a small probe table (`spike_event`). It emits CloudWatch metrics (`Quorum/DSQLMonitor`: `ClaimPass` per claim, `WriteLatencyP50/P99`) with alarms on claim failure or latency regression (→ the Phase-3 SNS topic). Continuous, no manual runs; also keeps the UI's latency concern under live watch. Real network-partition tests stay manual (NACL / AWS FIS) for the demo.
-- **DEC-012 (2026-06-07): The DSQL monitor doubles as a live observability layer.** Beyond CI-style validation, it stays deployed through the demo and the judging window (2026-06-30 → 2026-07-24) as an added observability/depth element — it continuously *proves the core claim* (strong cross-region consistency + region-failure survival) and surfaces live write latency. The war-room UI reads the `Quorum/DSQLMonitor` CloudWatch metrics (server-side `GetMetricData`) to render a live multi-region health panel. Constraints: probe writes go only to the isolated `spike_event` table (never app tables); cost stays within free tier / the $20 budget (≤5 custom metrics, scale-to-zero DSQL, Lambda free tier — RISK-4); tighten `schedule_expression` (e.g. `rate(15 minutes)`) during demo/judging for fresh data, relax otherwise. Live end-to-end validation lands with the app cluster (WP-8); the bundle is confirmed loadable today.
+- **DEC-012 (2026-06-07): The DSQL monitor doubles as a live observability layer.** Beyond CI-style validation, it stays deployed through the demo and the judging window (2026-06-30 → 2026-07-24) as an added observability/depth element, it continuously *proves the core claim* (strong cross-region consistency + region-failure survival) and surfaces live write latency. The war-room UI reads the `Quorum/DSQLMonitor` CloudWatch metrics (server-side `GetMetricData`) to render a live multi-region health panel. Constraints: probe writes go only to the isolated `spike_event` table (never app tables); cost stays within free tier / the $20 budget (≤5 custom metrics, scale-to-zero DSQL, Lambda free tier, RISK-4); tighten `schedule_expression` (e.g. `rate(15 minutes)`) during demo/judging for fresh data, relax otherwise. Live end-to-end validation lands with the app cluster (WP-8); the bundle is confirmed loadable today.
 
 **11.2 Change log.** One line per material change to the plan. Date, what changed, why.
 
 - 2026-06-06: Document created. Initial scope, architecture, and schedule locked.
 - 2026-06-07: WP-0 spike built and validated locally (infra/spike + packages/spike-failover; terraform validate, strict tsc, 10/10 unit tests). AWS apply/run deferred on the account verification window. Added DEC-007 (raw pg for the spike) and DEC-008 (docs/ public-safe, docs/private/ for operational detail; AUDIT.md moved, PROVENANCE redacted). SOW relocated to docs/SOW.md.
 - 2026-06-07: Added DEC-009 (Vercel CLI-deploy-only policy). Promoted the decision-log protocol into CLAUDE.md (new "Decision governance" + "Vercel deployment policy" sections) and added scripts/preflight-vercel.sh (account-mismatch guard).
-- 2026-06-07: WP-0 failover spike APPLIED and **PASSED** (C1 strong consistency, C2 active-active, C3 region-failure survival; cross-region write median 754 ms / p99 994 ms, n=50). Go/no-go gate (§7.1) = **GO** — DSQL multi-region thesis validated; code carries forward (DEC-006).
-- 2026-06-07: WP-2 data layer — schema migrations 0001–0004 (service, signal, incident, incident_event) + Kysely types in packages/db (DEC-010), on the spike-proven client/OCC. Built the scheduled Lambda monitor next (DEC-011).
-- 2026-06-07: Added DEC-011 + `functions/dsql-monitor` (scheduled Lambda reusing the WP-0 claims) and `infra/monitor` (Lambda + EventBridge schedule + CloudWatch alarms) to automate the consistency/active-active/failover/latency checks against live DSQL — continuous monitoring, no manual runs.
-- 2026-06-07: DEC-012 — the DSQL monitor is repurposed as a live observability layer for the demo + judging window (war-room UI reads Quorum/DSQLMonitor metrics; isolated probe table; within budget). Bundle confirmed loadable. Carrying on with WP-3.
+- 2026-06-07: WP-0 failover spike APPLIED and **PASSED** (C1 strong consistency, C2 active-active, C3 region-failure survival; cross-region write median 754 ms / p99 994 ms, n=50). Go/no-go gate (§7.1) = **GO**, DSQL multi-region thesis validated; code carries forward (DEC-006).
+- 2026-06-07: WP-2 data layer, schema migrations 0001–0004 (service, signal, incident, incident_event) + Kysely types in packages/db (DEC-010), on the spike-proven client/OCC. Built the scheduled Lambda monitor next (DEC-011).
+- 2026-06-07: Added DEC-011 + `functions/dsql-monitor` (scheduled Lambda reusing the WP-0 claims) and `infra/monitor` (Lambda + EventBridge schedule + CloudWatch alarms) to automate the consistency/active-active/failover/latency checks against live DSQL, continuous monitoring, no manual runs.
+- 2026-06-07: DEC-012, the DSQL monitor is repurposed as a live observability layer for the demo + judging window (war-room UI reads Quorum/DSQLMonitor metrics; isolated probe table; within budget). Bundle confirmed loadable. Carrying on with WP-3.
+- 2026-06-07: Added WP-12, editorial and hygiene pass with pre-submission and public-flip modes, as a Phase 5 gate and a precondition for any public flip.
 
 ---
 
@@ -324,27 +334,32 @@ Items to satisfy per the official rules, tracked here for the verification step.
 ## Appendix A: key facts and links
 
 **Deadlines:**
+
 - Registration and submission: May 27 to Jun 29, 2026, 5:00pm PDT.
 - Credit request form: by Jun 26, 2026, 12:00pm PT.
 - Judging: Jun 30 to Jul 24, 2026.
 - Winners: on or around Jul 31, 2026.
 
 **Credits:**
+
 - Hackathon: $100 AWS promotional credits (expire 2026-12-31), $30 v0 credits (redeem by 2026-07-13).
 - New AWS account: $100 on sign-up plus up to $100 earned, both plans.
 - DSQL free tier: 100,000 DPUs and 1 GB storage per month, scales to zero.
 
 **Prize structure (each project wins at most one prize):**
+
 - Per track: first $10,000, second $5,000, third $3,000, each matched in AWS credits.
 - Best-of awards: Best Technical Implementation, Best Design, Most Impactful, Most Original, each $2,000 plus $2,000 credits.
 
 **Scoring:**
+
 - Four equally weighted criteria (Technical Implementation, Design, Impact and Real-world Applicability, Originality), base score to 5.0.
 - Bonus content up to 0.6. Final range 1.0 to 5.6.
 
 **Required submission artifacts:** text description, demo video under 3 minutes on YouTube, published Vercel project link and Team ID, architecture diagram, storage-configuration screenshots.
 
 **Key URLs:**
+
 - Hackathon: h01.devpost.com
 - Rules: h01.devpost.com/rules
 - Build with v0: v0.app

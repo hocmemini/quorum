@@ -1,7 +1,7 @@
 #!/bin/sh
 # Locally blackhole a DSQL endpoint to validate failover under a REAL hanging connection.
 # DSQL regional endpoints resolve to MULTIPLE / rotating IPs, so dropping one resolved IP with
-# iptables is unreliable — the client just reconnects on another IP (observed 2026-06-07: smoke
+# iptables is unreliable - the client just reconnects on another IP (observed 2026-06-07: smoke
 # was still served by the "blackholed" region). Instead we pin the hostname to a non-routable
 # blackhole IP via /etc/hosts, so EVERY connection to it hangs until the client connect-timeout
 # trips and the FailoverClient moves to the next region. The Phase-3 demo upgrades this to a real

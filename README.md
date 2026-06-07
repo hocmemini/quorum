@@ -4,7 +4,7 @@ Incident command plane on Aurora DSQL (multi-region). H0 hackathon.
 
 ## Prerequisites
 
-- Node 22 LTS (see `.nvmrc`) — repo currently validated on Node 24
+- Node 22 LTS (see `.nvmrc`), repo currently validated on Node 24
 - pnpm (`corepack enable`)
 - Terraform >= 1.11
 - AWS CLI v2 with profile `h0`

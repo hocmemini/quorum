@@ -6,7 +6,7 @@ export interface Endpoint {
   readonly host: string;
 }
 
-/** Minimal connection handle — satisfied by the pg client wrapper and by test fakes. */
+/** Minimal connection handle - satisfied by the pg client wrapper and by test fakes. */
 export interface Conn {
   query<R = Record<string, unknown>>(
     sql: string,

@@ -20,7 +20,7 @@ function evt(
 const t = (s: number): Date => new Date(Date.UTC(2026, 0, 1, 0, 0, s));
 
 describe('projectIncident', () => {
-  it('folds opened → note → action → assign → severity → resolve', () => {
+  it('folds opened -> note -> action -> assign -> severity -> resolve', () => {
     const state = projectIncident('inc-1', [
       evt({
         type: 'incident.opened',
