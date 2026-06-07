@@ -1,0 +1,11 @@
+# gitleaks config — extends the built-in ruleset. Repo goes public later: keep this strict.
+title = "Quorum gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret files (names/placeholders only)"
+paths = [
+  '''(^|/)\.env\.example$''',
+]
