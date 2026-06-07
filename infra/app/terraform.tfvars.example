@@ -1,0 +1,5 @@
+aws_profile      = "h0"
+primary_region   = "us-east-1"
+secondary_region = "us-east-2"
+witness_region   = "us-west-2"
+# deletion_protection = true   # production default; keep on through judging
