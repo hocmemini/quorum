@@ -66,12 +66,36 @@ that goes public later. No work-provenance was lost; history is append-only from
 
 ---
 
-## Pending / gated (awaiting user)
+## 2026-06-07 — AWS Free Tier activity credits pass — FULLY DEFERRED
 
-- **Phase 1 AWS data** (CE spend, resource sweep, IAM/security, account-level S3 BPA, DSQL
-  account availability) — deferred until auth propagates; resume per AUDIT.md.
-- **Phase 2 cleanup** — gated on line-item approval of the AUDIT.md KILL LIST (not yet
-  producible).
-- **Phase 3 AWS scaffold** (account S3 BPA, `h0-quorum-tfstate-260289091534` bucket, SNS
-  topic + subscription, $20 budget, billing alarm) — gated on approval **and** billing
-  verification; needs your alert email address.
+Attempted the $100 (5 × $20) Free Tier activity-credit pass. **AWS auth had regressed to
+full failure** — by 18:58 UTC even `sts get-caller-identity` returned `InvalidClientTokenId`
+(earlier in the day STS worked while other services didn't). Stored `h0` key unchanged, no
+env-cred interference, credentials file intact → server-side auth state (billing/verification
+window), not fixable locally. **No resources were created or destroyed. Nothing billed.**
+
+| # | Activity | Method (when unblocked) | Credit | Status |
+|---|---|---|---|---|
+| 1 | AWS Budgets | CLI `create-budget` ($20 monthly cost) — permanent | $20 | DEFERRED (auth) |
+| 2 | Lambda web app | inline `nodejs22.x` fn + function URL (auth NONE), curl 200, delete | $20 | DEFERRED (auth) |
+| 3 | EC2 instance | `t3.micro` from AL2023 SSM AMI, run → terminate | $20 | DEFERRED (auth) |
+| 4 | RDS database | PostgreSQL `db.t4g.micro` 20 GB gp3, create → delete | $20 | DEFERRED (auth) |
+| 5 | Bedrock | `bedrock-runtime converse` (Nova Micro) + manual console fallback | $20 | DEFERRED (auth) |
+| | **Total** | | **$100** | **0 claimed** |
+
+Runnable commands for all five (plus carried-over prep) are consolidated in
+[REMAINING.md](./REMAINING.md) for a single future pass.
+
+## Consolidated remaining work → [REMAINING.md](./REMAINING.md)
+
+All blocked on the AWS billing/verification window (auth). When `aws ec2 describe-regions`
+succeeds, run REMAINING.md top-to-bottom:
+
+- **A.** Free Tier credits (5 activities above) — ephemeral; all destroyed in-pass **except the budget**.
+- **B1.** Phase 1 audit (CE spend, `scripts/audit-sweep.sh`, IAM hygiene, DSQL account check) → KILL/KEEP lists → **stop for line-item approval**.
+- **B2.** Phase 2 cleanup — gated on B1 approval.
+- **B3.** Phase 3 scaffold (account S3 BPA, tfstate bucket, SNS, budget, billing alarm) — gated on approval + **needs your alert email**.
+- **C.** WP-0 Aurora DSQL failover spike → `packages/spike-failover`.
+
+**Open user action items:** rotate the `h0` key when done (it was pasted in chat); provide an
+alert email for Phase 3; line-item approve the KILL LIST once B1 produces it.
