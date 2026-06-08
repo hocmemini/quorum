@@ -97,7 +97,8 @@
     "presentational",
     "triggerable",
     "alives",
-    "userguide"
+    "userguide",
+    "unindexed"
   ],
   "ignorePaths": [
     "node_modules/**",
