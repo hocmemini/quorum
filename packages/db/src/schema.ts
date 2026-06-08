@@ -27,6 +27,7 @@ export interface SignalTable {
 export interface IncidentTable {
   incident_id: string; // uuid, app-supplied
   signal_id: string | null; // app-layer ref -> signal (null = manually opened)
+  org_id: string | null; // workspace key (DEC-016); null = legacy / no workspace
   origin_region: string;
   created_at: Generated<Date>;
 }
@@ -46,11 +47,20 @@ export interface IncidentEventTable {
   created_at: Generated<Date>;
 }
 
+/** Collaboration workspace (DEC-016): incidents are isolated by org_id; join by code. */
+export interface WorkspaceTable {
+  org_id: string;
+  name: string;
+  join_code: string;
+  created_at: Generated<Date>;
+}
+
 export interface Database {
   service: ServiceTable;
   signal: SignalTable;
   incident: IncidentTable;
   incident_event: IncidentEventTable;
+  workspace: WorkspaceTable;
 }
 
 export type Service = Selectable<ServiceTable>;
@@ -61,6 +71,8 @@ export type Incident = Selectable<IncidentTable>;
 export type NewIncident = Insertable<IncidentTable>;
 export type IncidentEvent = Selectable<IncidentEventTable>;
 export type NewIncidentEvent = Insertable<IncidentEventTable>;
+export type Workspace = Selectable<WorkspaceTable>;
+export type NewWorkspace = Insertable<WorkspaceTable>;
 
 /** Known incident_event.type values (app-enforced; see IncidentEventTable.type). */
 export const INCIDENT_EVENT_TYPES = [

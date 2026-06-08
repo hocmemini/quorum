@@ -10,8 +10,8 @@ const files = readdirSync(dir)
   .sort();
 
 describe('WP-2 migrations', () => {
-  it('contains the four core tables in order', () => {
-    expect(files).toEqual([
+  it('starts with the four core tables in order', () => {
+    expect(files.slice(0, 4)).toEqual([
       '0001_service.sql',
       '0002_signal.sql',
       '0003_incident.sql',
@@ -24,8 +24,8 @@ describe('WP-2 migrations', () => {
       const stmts = splitStatements(readFileSync(join(dir, f), 'utf8'));
       expect(stmts.length).toBeGreaterThan(0);
       for (const s of stmts) {
-        // one CREATE per statement (one DDL per transaction)
-        expect(s.match(/\bCREATE\b/gi)?.length).toBe(1);
+        // exactly one DDL statement per transaction (CREATE or additive ALTER)
+        expect((s.match(/\b(?:CREATE|ALTER)\b/gi) ?? []).length).toBe(1);
         if (/CREATE\s+INDEX/i.test(s)) {
           expect(/CREATE\s+INDEX\s+ASYNC/i.test(s)).toBe(true);
         }

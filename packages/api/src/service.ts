@@ -67,16 +67,24 @@ export async function createIncident(
     severity: unknown;
     signalId?: unknown;
     incidentId?: unknown;
+    orgId?: unknown;
   },
 ): Promise<{ incidentId: string; deduped: boolean }> {
   const title = reqStr(req.title, 'title');
   const severity = reqStr(req.severity, 'severity');
   const signalId = optStr(req.signalId, 'signalId');
   const incidentId = optStr(req.incidentId, 'incidentId');
+  const orgId = optStr(req.orgId, 'orgId');
   const ctx = ctxFrom(req);
   return openIncident(
     db,
-    { title, severity, signalId: signalId ?? null, ...(incidentId ? { incidentId } : {}) },
+    {
+      title,
+      severity,
+      signalId: signalId ?? null,
+      ...(orgId ? { orgId } : {}),
+      ...(incidentId ? { incidentId } : {}),
+    },
     ctx,
   );
 }

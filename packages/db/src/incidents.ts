@@ -61,7 +61,13 @@ function buildEvent(
 /** Open an incident: create the anchor row (idempotent) and append `incident.opened`. */
 export async function openIncident(
   db: Kysely<Database>,
-  args: { incidentId?: string; signalId?: string | null; title: string; severity: string },
+  args: {
+    incidentId?: string;
+    signalId?: string | null;
+    orgId?: string | null;
+    title: string;
+    severity: string;
+  },
   ctx: EventContext,
 ): Promise<{ incidentId: string } & WriteResult> {
   const incidentId = args.incidentId ?? randomUUID();
@@ -71,6 +77,7 @@ export async function openIncident(
       .values({
         incident_id: incidentId,
         signal_id: args.signalId ?? null,
+        org_id: args.orgId ?? null,
         origin_region: ctx.originRegion,
       })
       .execute();

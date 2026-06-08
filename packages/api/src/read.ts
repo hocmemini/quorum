@@ -18,15 +18,16 @@ export interface IncidentSummary {
  */
 export async function listIncidents(
   db: Kysely<Database>,
-  opts: { limit?: number } = {},
+  opts: { limit?: number; orgId?: string } = {},
 ): Promise<IncidentSummary[]> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
-  const rows = await db
+  let builder = db
     .selectFrom('incident')
     .select(['incident_id', 'origin_region', 'created_at'])
     .orderBy('created_at', 'desc')
-    .limit(limit)
-    .execute();
+    .limit(limit);
+  if (opts.orgId) builder = builder.where('org_id', '=', opts.orgId);
+  const rows = await builder.execute();
   return Promise.all(
     rows.map(async (r) => {
       const state = await getIncidentState(db, r.incident_id);
