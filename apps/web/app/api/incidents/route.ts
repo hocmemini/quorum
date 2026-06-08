@@ -1,11 +1,14 @@
 import { createIncident, listIncidents, ValidationError } from '@quorum/api';
-import { chaosState, query } from '@/lib/db';
+import { activeOrgId, chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const incidents = await query((k) => listIncidents(k, { limit: 50 }));
+  const orgId = await activeOrgId();
+  const incidents = await query((k) =>
+    listIncidents(k, { limit: 50, ...(orgId ? { orgId } : {}) }),
+  );
   const { serving } = await chaosState();
   return Response.json({ incidents, region: serving });
 }
@@ -19,9 +22,16 @@ export async function POST(req: Request) {
   }
   const { title, severity } = (body ?? {}) as Record<string, unknown>;
   const { serving } = await chaosState();
+  const orgId = await activeOrgId();
   try {
     const result = await query((k) =>
-      createIncident(k, { title, severity, originRegion: serving, actor: 'web' }),
+      createIncident(k, {
+        title,
+        severity,
+        originRegion: serving,
+        actor: 'web',
+        ...(orgId ? { orgId } : {}),
+      }),
     );
     return Response.json(result, { status: 201 });
   } catch (e) {

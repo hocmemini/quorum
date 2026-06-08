@@ -1,9 +1,12 @@
-import { listIncidents } from '@quorum/api';
+import { getWorkspace, listIncidents } from '@quorum/api';
 import Link from 'next/link';
+import { AutoRefresh } from '@/components/AutoRefresh';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
+import { Onboarding } from '@/components/Onboarding';
 import { SystemStatus } from '@/components/SystemStatus';
-import { chaosState, query, regionHealth } from '@/lib/db';
+import { WorkspaceBar } from '@/components/WorkspaceBar';
+import { activeOrgId, chaosState, query, regionHealth } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,15 +16,31 @@ function fmt(d: Date | null): string {
 }
 
 export default async function Home() {
-  const incidents = await query((k) => listIncidents(k, { limit: 50 }));
+  const orgId = await activeOrgId();
+  const ws = orgId ? await query((db) => getWorkspace(db, orgId)) : null;
+  if (!orgId || !ws) {
+    return (
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <Onboarding />
+      </main>
+    );
+  }
+
+  const incidents = await query((k) => listIncidents(k, { limit: 50, orgId }));
   const chaos = await chaosState();
   const health = await regionHealth();
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
-        <p className="text-sm text-muted">Incident command plane on multi-region Aurora DSQL.</p>
+      <AutoRefresh intervalMs={2500} />
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
+          <p className="text-sm text-muted">
+            Workspace <span className="text-fg">{ws.name}</span>
+          </p>
+        </div>
+        <WorkspaceBar name={ws.name} joinCode={ws.joinCode} />
       </header>
 
       <SystemStatus

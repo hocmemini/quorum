@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 
 const CHAOS_COOKIE = 'quorum_chaos_down';
 export const CHAOS_COOKIE_NAME = CHAOS_COOKIE;
+const ORG_COOKIE = 'quorum_org';
+export const ORG_COOKIE_NAME = ORG_COOKIE;
 
 let cached: FailoverDb | undefined;
 
@@ -33,6 +35,11 @@ async function cookieDownRegions(): Promise<string[]> {
 /** Run a DB op with request-scoped chaos applied (the failover demo cookie). Server-only. */
 export async function query<T>(fn: (db: AppDb) => Promise<T>): Promise<T> {
   return getDb().run(fn, { downRegions: await cookieDownRegions() });
+}
+
+/** The active workspace id from the session cookie (DEC-016), or null if none chosen yet. */
+export async function activeOrgId(): Promise<string | null> {
+  return (await cookies()).get(ORG_COOKIE)?.value ?? null;
 }
 
 /**
