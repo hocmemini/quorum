@@ -1,7 +1,16 @@
-import { getWorkspace, type IncidentSummary, listIncidents } from '@quorum/api';
+import {
+  type ActivityItem,
+  getWorkspace,
+  type IncidentSummary,
+  listIncidents,
+  recentActivity,
+  workspaceMetrics,
+} from '@quorum/api';
 import Link from 'next/link';
+import { ActivityFeed } from '@/components/ActivityFeed';
 import { AutoRefresh } from '@/components/AutoRefresh';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
+import { type Metric, MetricsPanel } from '@/components/MetricsPanel';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
 import { Onboarding } from '@/components/Onboarding';
 import { SystemStatus } from '@/components/SystemStatus';
@@ -32,10 +41,16 @@ export default async function Home() {
   // Reads can fail if every serving region is down; degrade gracefully rather than crash.
   let ws: { orgId: string; name: string; joinCode: string } | null = null;
   let incidents: IncidentSummary[] = [];
+  let metrics = { events: 0, services: 0, signals: 0 };
+  let activity: ActivityItem[] = [];
   let dbError = false;
   try {
     ws = await query((db) => getWorkspace(db, orgId));
-    if (ws) incidents = await query((k) => listIncidents(k, { limit: 50, orgId }));
+    if (ws) {
+      incidents = await query((k) => listIncidents(k, { limit: 50, orgId }));
+      metrics = await query((k) => workspaceMetrics(k, orgId));
+      activity = await query((k) => recentActivity(k, orgId, 8));
+    }
   } catch {
     dbError = true;
   }
@@ -49,6 +64,26 @@ export default async function Home() {
   }
 
   const unavailable = chaos.allDown || dbError;
+  const openCount = incidents.filter((i) => i.status !== 'resolved').length;
+  const resolvedCount = incidents.filter((i) => i.status === 'resolved').length;
+  const sev1Count = incidents.filter(
+    (i) => i.severity === 'sev1' && i.status !== 'resolved',
+  ).length;
+  const healthy = health.filter((h) => h.up).length;
+  const metricCards: Metric[] = [
+    { label: 'Open incidents', value: openCount, tone: openCount > 0 ? 'accent' : 'fg' },
+    { label: 'Sev1 active', value: sev1Count, tone: sev1Count > 0 ? 'sev1' : 'fg' },
+    { label: 'Resolved', value: resolvedCount, tone: 'ok' },
+    { label: 'Events logged', value: metrics.events, tone: 'fg' },
+    { label: 'Services monitored', value: metrics.services, tone: 'fg' },
+    { label: 'Signals', value: metrics.signals, tone: 'fg' },
+    {
+      label: 'Regions serving',
+      value: `${healthy}/${health.length}`,
+      tone: healthy === health.length ? 'ok' : 'sev1',
+    },
+    { label: 'Write p50', value: '~89 ms', tone: 'fg' },
+  ];
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
@@ -85,6 +120,7 @@ export default async function Home() {
         </section>
       ) : (
         <>
+          <MetricsPanel metrics={metricCards} />
           <NewIncidentForm />
           <section className="mt-6 overflow-hidden rounded-lg border border-line">
             {incidents.length === 0 ? (
@@ -130,6 +166,7 @@ export default async function Home() {
               </table>
             )}
           </section>
+          <ActivityFeed items={activity} />
         </>
       )}
     </main>

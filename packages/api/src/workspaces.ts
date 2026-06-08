@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   addNote,
   assignAction,
+  changeSeverity,
   changeStatus,
   createAction,
   type Database,
@@ -70,12 +71,13 @@ export async function ensureWorkspace(
   await seedWorkspace(db, orgId);
 }
 
-/** Open a few realistic incidents in a workspace. Idempotent: deterministic ids per org. */
+/** Open three realistic incidents with full timelines. Idempotent: deterministic ids per org. */
 export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promise<void> {
   const region = 'us-east-1';
   const id = (s: string) => deterministicId(`ws:${orgId}:${s}`);
   const ctx = (actor: string, evt: string) => ({ originRegion: region, actor, eventId: id(evt) });
 
+  // i1: 5xx spike, escalated to sev1, then resolved.
   const i1 = id('i1');
   await openIncident(
     db,
@@ -85,39 +87,111 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   await addNote(
     db,
     i1,
-    'Pager fired on elevated 5xx from api-gateway. On-call investigating.',
+    'Pager fired: 5xx error rate at 12% on api-gateway (us-east-1), well above the 1% SLO.',
     ctx('alice', 'i1:n1'),
   );
-  const a1 = id('i1:a1');
+  await changeStatus(db, i1, 'acknowledged', ctx('alice', 'i1:ack'));
+  await addNote(
+    db,
+    i1,
+    'Onset correlates with deploy api-gateway@4.7.1 ~10 minutes ago. Errors still climbing.',
+    ctx('alice', 'i1:n2'),
+  );
+  await changeSeverity(db, i1, 'sev1', ctx('alice', 'i1:sev'));
+  const i1a1 = id('i1:a1');
   await createAction(
     db,
     i1,
-    { actionId: a1, title: 'Shift traffic to us-east-2' },
+    { actionId: i1a1, title: 'Shift read traffic to us-east-2' },
     ctx('alice', 'i1:ac1'),
   );
-  await assignAction(db, i1, a1, 'bob', ctx('alice', 'i1:as1'));
-  await changeStatus(db, i1, 'acknowledged', ctx('bob', 'i1:ack'));
+  await assignAction(db, i1, i1a1, 'bob', ctx('alice', 'i1:as1'));
+  await addNote(
+    db,
+    i1,
+    'Traffic shifted to us-east-2; the survivor is absorbing load. Error rate falling 12% -> 4%.',
+    ctx('bob', 'i1:n3'),
+  );
+  const i1a2 = id('i1:a2');
+  await createAction(
+    db,
+    i1,
+    { actionId: i1a2, title: 'Roll back api-gateway to 4.7.0' },
+    ctx('bob', 'i1:ac2'),
+  );
+  await assignAction(db, i1, i1a2, 'carol', ctx('bob', 'i1:as2'));
+  await addNote(
+    db,
+    i1,
+    'Rollback complete. Root cause: connection-pool exhaustion (pool 20, demand ~60). Back to 0.2%.',
+    ctx('carol', 'i1:n4'),
+  );
+  await resolveIncident(db, i1, ctx('carol', 'i1:res'));
 
+  // i2: auth failures, active sev1.
   const i2 = id('i2');
   await openIncident(
     db,
-    { incidentId: i2, orgId, title: 'Auth token validation errors', severity: 'sev1' },
+    { incidentId: i2, orgId, title: 'Auth token validation failures', severity: 'sev1' },
     ctx('cloudwatch', 'i2:open'),
   );
   await addNote(
     db,
     i2,
-    'auth-service returning 401s for valid tokens; rolling back the last deploy.',
+    'auth-service rejecting valid JWTs with 401 (signature mismatch); ~30% of logins failing.',
     ctx('carol', 'i2:n1'),
   );
-
+  await changeStatus(db, i2, 'acknowledged', ctx('carol', 'i2:ack'));
+  await addNote(
+    db,
+    i2,
+    'Suspect the JWKS rotation at 14:02 did not propagate to all auth-service pods.',
+    ctx('dave', 'i2:n2'),
+  );
+  const i2a1 = id('i2:a1');
+  await createAction(
+    db,
+    i2,
+    { actionId: i2a1, title: 'Force JWKS refresh + rolling restart' },
+    ctx('dave', 'i2:ac1'),
+  );
+  await assignAction(db, i2, i2a1, 'erin', ctx('dave', 'i2:as1'));
+  await addNote(
+    db,
+    i2,
+    '18 of 24 pods refreshed and validating tokens; login success recovering 70% -> 92%.',
+    ctx('erin', 'i2:n3'),
+  );
+  // i3: webhook backlog, resolved.
   const i3 = id('i3');
   await openIncident(
     db,
     { incidentId: i3, orgId, title: 'Payment webhook backlog', severity: 'sev3' },
     ctx('cloudwatch', 'i3:open'),
   );
-  await resolveIncident(db, i3, ctx('dave', 'i3:res'));
+  await addNote(
+    db,
+    i3,
+    'Stripe webhook consumer lag at 4,200 messages; settlement confirmations delayed.',
+    ctx('bob', 'i3:n1'),
+  );
+  await changeStatus(db, i3, 'acknowledged', ctx('bob', 'i3:ack'));
+  const i3a1 = id('i3:a1');
+  await createAction(
+    db,
+    i3,
+    { actionId: i3a1, title: 'Scale webhook consumers 2 -> 6' },
+    ctx('bob', 'i3:ac1'),
+  );
+  await assignAction(db, i3, i3a1, 'alice', ctx('bob', 'i3:as1'));
+  await addNote(
+    db,
+    i3,
+    'Scaled to 6 consumers; backlog draining at ~800 msg/min.',
+    ctx('alice', 'i3:n2'),
+  );
+  await addNote(db, i3, 'Backlog cleared, consumer lag back to 0.', ctx('alice', 'i3:n3'));
+  await resolveIncident(db, i3, ctx('alice', 'i3:res'));
 }
 
 /** Reset the demo workspace to its seed (clear judge clutter so it does not rot over judging). */
