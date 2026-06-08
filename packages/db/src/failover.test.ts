@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runWithFailover } from './failover';
+import { createFailoverDb, runWithFailover } from './failover';
 import { isConnectionError } from './occ';
 
 const connErr = (): Error =>
@@ -100,5 +100,38 @@ describe('isConnectionError', () => {
   it('ignores serialization and unrelated errors', () => {
     expect(isConnectionError(Object.assign(new Error('x'), { code: '40001' }))).toBe(false);
     expect(isConnectionError(new Error('validation failed'))).toBe(false);
+  });
+});
+
+describe('createFailoverDb chaos (WP-9)', () => {
+  it('fails over away from a region marked down', async () => {
+    const db = createFailoverDb(
+      [
+        { region: 'us-east-1', host: 'primary.invalid' },
+        { region: 'us-east-2', host: 'secondary.invalid' },
+      ],
+      {},
+      { downRegions: ['us-east-1'] },
+    );
+    try {
+      const served = await db.run(async () => 'ok');
+      expect(served).toBe('ok');
+      expect(db.current()).toBe('us-east-2');
+    } finally {
+      await db.close();
+    }
+  });
+
+  it('throws when every region is marked down', async () => {
+    const db = createFailoverDb(
+      [{ region: 'us-east-1', host: 'primary.invalid' }],
+      {},
+      { downRegions: ['us-east-1'] },
+    );
+    try {
+      await expect(db.run(async () => 'ok')).rejects.toThrow(/down|unavailable/i);
+    } finally {
+      await db.close();
+    }
   });
 });

@@ -49,26 +49,49 @@ export async function runWithFailover<T>(
   throw lastErr ?? new Error('all regions unavailable');
 }
 
+/** Regions to treat as partitioned for the chaos demo (WP-9), from QUORUM_CHAOS_DOWN_REGIONS. */
+export function chaosDownRegions(env: NodeJS.ProcessEnv = process.env): string[] {
+  return (env.QUORUM_CHAOS_DOWN_REGIONS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 /**
  * Region-aware Kysely over a peered DSQL pair (DEC-006: carries the WP-0 failover forward). One
  * pool per region; `run()` prefers the last-good region and sticks to whichever region serves the
  * request, so a regional outage transparently moves work to the survivor. Retrying `fn` on the
  * failover region is safe because writes are idempotent on the event/anchor id (DEC-005) and reads
  * are side-effect free.
+ *
+ * `options.downRegions` (default: QUORUM_CHAOS_DOWN_REGIONS) marks regions as partitioned, so the
+ * live demo can force a failover without touching the database (WP-9 chaos).
  */
 export function createFailoverDb(
   endpoints: ReadonlyArray<RegionEndpoint>,
   config: Partial<Omit<DsqlConfig, 'host' | 'region'>> = {},
+  options: { downRegions?: Iterable<string> } = {},
 ): FailoverDb {
   if (endpoints.length === 0) throw new Error('createFailoverDb: at least one endpoint required');
   const states = endpoints.map((ep) =>
     createDb<Database>({ host: ep.host, region: ep.region, ...config }),
   );
+  const down = new Set(options.downRegions ?? chaosDownRegions());
   let current = 0;
 
   return {
     run<T>(fn: (db: Kysely<Database>) => Promise<T>): Promise<T> {
-      const attempts = states.map((s) => () => fn(s.db));
+      const attempts = states.map((s, i) => () => {
+        const region = endpoints[i]?.region;
+        if (region && down.has(region)) {
+          return Promise.reject(
+            Object.assign(new Error(`chaos: region ${region} marked down`), {
+              code: 'ECONNREFUSED',
+            }),
+          );
+        }
+        return fn(s.db);
+      });
       return runWithFailover(attempts, current, (idx) => {
         current = idx;
       });
