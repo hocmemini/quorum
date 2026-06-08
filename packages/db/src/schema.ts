@@ -55,12 +55,30 @@ export interface WorkspaceTable {
   created_at: Generated<Date>;
 }
 
+/** Latest control-plane snapshot the monitor writes each run (DEC-017); the dashboard reads it. */
+export interface MonitorSnapshot {
+  at: string;
+  regions: { region: string; healthy: boolean; readLatencyMs: number | null }[];
+  writeP50Ms: number;
+  writeP99Ms: number;
+  consistency: { pass: boolean; crossRegionMs: number };
+  failover: { survivalPass: boolean; warmFailoverMs: number };
+  cost: { monthToDate: number; limit: number; note: string };
+}
+
+export interface MonitorStatusTable {
+  snapshot_id: string;
+  snapshot: ColumnType<MonitorSnapshot, string, string>;
+  created_at: Generated<Date>;
+}
+
 export interface Database {
   service: ServiceTable;
   signal: SignalTable;
   incident: IncidentTable;
   incident_event: IncidentEventTable;
   workspace: WorkspaceTable;
+  monitor_status: MonitorStatusTable;
 }
 
 export type Service = Selectable<ServiceTable>;
@@ -73,6 +91,7 @@ export type IncidentEvent = Selectable<IncidentEventTable>;
 export type NewIncidentEvent = Insertable<IncidentEventTable>;
 export type Workspace = Selectable<WorkspaceTable>;
 export type NewWorkspace = Insertable<WorkspaceTable>;
+export type MonitorStatus = Selectable<MonitorStatusTable>;
 
 /** Known incident_event.type values (app-enforced; see IncidentEventTable.type). */
 export const INCIDENT_EVENT_TYPES = [

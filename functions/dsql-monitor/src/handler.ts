@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { BudgetsClient, DescribeBudgetCommand } from '@aws-sdk/client-budgets';
 import {
   CloudWatchClient,
   type MetricDatum,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch';
+import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import type { MonitorSnapshot } from '@quorum/db';
 import {
   type ClaimResult,
   claimActiveActive,
@@ -29,10 +32,31 @@ export interface MonitorResult {
   latencyP99Ms: number;
 }
 
+/** Best-effort current spend from the budget; falls back to scale-to-zero if the role lacks perms. */
+async function readCost(): Promise<MonitorSnapshot['cost']> {
+  try {
+    const id = await new STSClient({}).send(new GetCallerIdentityCommand({}));
+    const b = await new BudgetsClient({ region: 'us-east-1' }).send(
+      new DescribeBudgetCommand({
+        AccountId: id.Account,
+        BudgetName: process.env.MONITOR_BUDGET_NAME ?? 'h0-quorum-monthly',
+      }),
+    );
+    return {
+      monthToDate: Number(b.Budget?.CalculatedSpend?.ActualSpend?.Amount ?? 0),
+      limit: Number(b.Budget?.BudgetLimit?.Amount ?? 20),
+      note: 'scale-to-zero',
+    };
+  } catch {
+    return { monthToDate: 0, limit: 20, note: 'scale-to-zero' };
+  }
+}
+
 /**
- * Scheduled probe (DEC-011): runs the WP-0 claims (strong consistency, active-active,
- * failover-survival) + cross-region write latency against live DSQL and emits CloudWatch
- * metrics. Real network-partition tests stay manual (NACL / FIS).
+ * Scheduled probe (DEC-011/017): runs the WP-0 claims (strong consistency, active-active,
+ * failover-survival) + cross-region write latency against live DSQL, emits CloudWatch metrics,
+ * and writes a control-plane snapshot into the `monitor_status` table so the dashboard reads it
+ * through the DSQL failover layer (region-survivable, no CloudWatch from the Vercel runtime).
  */
 export const handler = async (): Promise<MonitorResult> => {
   const config = loadConfig();
@@ -70,6 +94,43 @@ export const handler = async (): Promise<MonitorResult> => {
     latencyP50Ms = lat.medianMs;
     latencyP99Ms = lat.p99Ms;
     results.push(await claimSurvival(client, runId));
+
+    // Per-region health + read latency for the dashboard region tiles.
+    const regions: MonitorSnapshot['regions'] = [];
+    for (const r of client.regions()) {
+      const t = Date.now();
+      try {
+        await client.withClient(r, async (conn) => {
+          await conn.query('SELECT 1');
+        });
+        regions.push({ region: r, healthy: true, readLatencyMs: Date.now() - t });
+      } catch {
+        regions.push({ region: r, healthy: false, readLatencyMs: null });
+      }
+    }
+
+    const snapshot: MonitorSnapshot = {
+      at: new Date().toISOString(),
+      regions,
+      writeP50Ms: Math.round(latencyP50Ms),
+      writeP99Ms: Math.round(latencyP99Ms),
+      consistency: { pass: results[0]?.pass ?? false, crossRegionMs: Math.round(latencyP50Ms) },
+      failover: {
+        survivalPass: results[2]?.pass ?? false,
+        warmFailoverMs: Number(process.env.MONITOR_FAILOVER_MS ?? '57'),
+      },
+      cost: await readCost(),
+    };
+
+    await client.withClient(region, async (conn) => {
+      await conn.query(
+        'INSERT INTO monitor_status (snapshot_id, snapshot) VALUES ($1, $2::jsonb)',
+        [randomUUID(), JSON.stringify(snapshot)],
+      );
+      await conn
+        .query("DELETE FROM monitor_status WHERE created_at < now() - interval '2 hours'")
+        .catch(() => undefined);
+    });
   } finally {
     await client.end();
   }

@@ -8,10 +8,13 @@
     "build": "esbuild src/handler.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --external:pg-native"
   },
   "dependencies": {
+    "@aws-sdk/client-budgets": "^3.700.0",
     "@aws-sdk/client-cloudwatch": "^3.700.0",
+    "@aws-sdk/client-sts": "^3.700.0",
     "@quorum/spike-failover": "workspace:*"
   },
   "devDependencies": {
+    "@quorum/db": "workspace:*",
     "esbuild": "^0.28.0"
   }
 }

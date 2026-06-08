@@ -11,6 +11,7 @@ const TABLES: ReadonlyArray<{ table: string; pk: string }> = [
   { table: 'signal', pk: 'signal_id' },
   { table: 'service', pk: 'service_id' },
   { table: 'spike_event', pk: 'event_id' },
+  { table: 'monitor_status', pk: 'snapshot_id' },
 ];
 
 async function deleteAllRows(pool: Pool, table: string, pk: string): Promise<number> {

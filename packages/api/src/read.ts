@@ -1,4 +1,9 @@
-import { type Database, getIncidentState, type IncidentStatus } from '@quorum/db';
+import {
+  type Database,
+  getIncidentState,
+  type IncidentStatus,
+  type MonitorSnapshot,
+} from '@quorum/db';
 import type { Kysely } from 'kysely';
 
 export interface IncidentSummary {
@@ -108,4 +113,15 @@ export async function recentActivity(
     at: r.at as Date,
     incidentId: r.incidentId,
   }));
+}
+
+/** The latest control-plane snapshot the monitor wrote (DEC-017). READ path, region-survivable. */
+export async function latestMonitorSnapshot(db: Kysely<Database>): Promise<MonitorSnapshot | null> {
+  const row = await db
+    .selectFrom('monitor_status')
+    .select('snapshot')
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .executeTakeFirst();
+  return row?.snapshot ?? null;
 }
