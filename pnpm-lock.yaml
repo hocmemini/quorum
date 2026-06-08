@@ -48,7 +48,18 @@ importers:
         specifier: ^0.28.0
         version: 0.28.0
 
-  functions/ingest: {}
+  functions/ingest:
+    dependencies:
+      '@quorum/api':
+        specifier: workspace:*
+        version: link:../../packages/api
+      '@quorum/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
 
   packages/api:
     dependencies:

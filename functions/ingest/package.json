@@ -2,5 +2,17 @@
   "name": "@quorum/ingest",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "description": "Ingestion Lambda (WP-7): CloudWatch alarm -> EventBridge -> idempotent DSQL write.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/handler.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/index.js --external:pg-native",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@quorum/api": "workspace:*",
+    "@quorum/db": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
 }
