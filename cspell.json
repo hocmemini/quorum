@@ -83,7 +83,11 @@
     "Devpost",
     "Kafka",
     "bidi",
-    "invisibles"
+    "invisibles",
+    "bundleable",
+    "creds",
+    "dedups",
+    "idempotently"
   ],
   "ignorePaths": [
     "node_modules/**",
