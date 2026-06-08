@@ -35,6 +35,14 @@ The stack is deployed and verified end-to-end against the live clusters.
   standard db.t3.micro postgres single-AZ instance (`quorum-credit-rds`) created to trigger it, torn
   down once the activity flips to Completed.
 - **E2E:** 48 tests pass live; the deployed front+back flow verified by script.
+- **Dashboard (DEC-017):** the war-room centerpiece is a control-plane panel (region tiles with live
+  serving/health, warm write p50/p99, a cross-region consistency proof, warm failover time, spend)
+  read from a snapshot the monitor writes to a DSQL `monitor_status` table each run, so the dashboard
+  reads through the failover layer (no CloudWatch from Vercel) and is itself region-survivable. The
+  activity ticker and generic count tiles are gone; the incident view shows the opening signal,
+  affected service, append-only timeline, projected state, and cross-region consistency; deep
+  per-service metrics are deferred to Grafana/Datadog in-product. Verified live: the panel reacts to
+  a failover toggle (serving flips to the survivor and back).
 
 ## 1. Snapshot
 

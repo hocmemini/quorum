@@ -21,6 +21,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
 8. **Vercel OIDC auth, no static AWS key:** the runtime assumes an IAM role via web identity, so the
    one long-lived secret is gone. Measured warm: write p50 ~89 ms, failover ~57 ms warm / ~553 ms
    cold.
+9. **Control-plane dashboard (DEC-017):** the war-room centerpiece is a control-plane panel (region
+   tiles with live serving/health, warm write p50/p99, a cross-region consistency proof, warm
+   failover time, spend) read from a `monitor_status` snapshot the scheduled monitor writes to DSQL,
+   so the dashboard reads through the failover layer (no CloudWatch from Vercel) and survives a
+   region loss itself. Incidents show the opening signal, affected service, append-only timeline,
+   and cross-region consistency. Deep per-service metrics are deferred to Grafana/Datadog in-product.
 
 ---
 
