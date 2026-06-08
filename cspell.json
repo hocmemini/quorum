@@ -87,7 +87,8 @@
     "bundleable",
     "creds",
     "dedups",
-    "idempotently"
+    "idempotently",
+    "golive"
   ],
   "ignorePaths": [
     "node_modules/**",
