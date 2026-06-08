@@ -57,3 +57,26 @@ export async function chaosState(): Promise<{
   const primary = regions[0] ?? serving;
   return { regions, down, serving, degraded: serving !== primary };
 }
+
+/** Live per-region health for the system-status panel: probe each pool (chaos regions show down). */
+export async function regionHealth(): Promise<
+  { region: string; up: boolean; latencyMs: number | null }[]
+> {
+  const db = getDb();
+  const regions = db.regions();
+  const pools = db.pools();
+  const downSet = new Set(await cookieDownRegions());
+  return Promise.all(
+    regions.map(async (region, i) => {
+      const pool = pools[i];
+      if (downSet.has(region) || !pool) return { region, up: false, latencyMs: null };
+      const t = performance.now();
+      try {
+        await pool.query('SELECT 1');
+        return { region, up: true, latencyMs: Math.round(performance.now() - t) };
+      } catch {
+        return { region, up: false, latencyMs: null };
+      }
+    }),
+  );
+}

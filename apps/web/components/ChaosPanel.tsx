@@ -25,16 +25,12 @@ export function ChaosPanel({ regions, down }: { regions: string[]; down: string[
   }
 
   return (
-    <div className="mt-5 rounded-lg border border-line bg-surface p-4">
-      <div className="flex items-center gap-2">
-        <span className="size-2 rounded-full bg-accent" />
-        <h2 className="text-sm font-semibold">Resilience demo</h2>
-      </div>
-      <p className="mt-1 text-sm text-muted">
-        Simulate a region outage. This session fails over to a survivor; active-active means no data
-        is lost. Scoped to your browser only.
+    <div className="mt-3">
+      <p className="text-xs text-muted">
+        Simulate a region outage; this session fails over to the survivor (active-active, no data
+        lost), and the status above updates live.
       </p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         {regions.map((r) => {
           const isDown = downSet.has(r);
           return (

@@ -1,10 +1,9 @@
 import { listIncidents } from '@quorum/api';
 import Link from 'next/link';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
-import { ChaosPanel } from '@/components/ChaosPanel';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
-import { chaosState, query } from '@/lib/db';
-import { cn } from '@/lib/utils';
+import { SystemStatus } from '@/components/SystemStatus';
+import { chaosState, query, regionHealth } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,27 +15,22 @@ function fmt(d: Date | null): string {
 export default async function Home() {
   const incidents = await query((k) => listIncidents(k, { limit: 50 }));
   const chaos = await chaosState();
+  const health = await regionHealth();
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
-          <p className="text-sm text-muted">Incident command plane on multi-region Aurora DSQL.</p>
-        </div>
-        <span
-          className={cn(
-            'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs',
-            chaos.degraded ? 'border-sev2/40 text-sev2' : 'border-line text-muted',
-          )}
-        >
-          <span className={cn('size-1.5 rounded-full', chaos.degraded ? 'bg-sev2' : 'bg-ok')} />
-          {chaos.serving}
-          {chaos.degraded ? ' (failover active)' : ''}
-        </span>
+      <header>
+        <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
+        <p className="text-sm text-muted">Incident command plane on multi-region Aurora DSQL.</p>
       </header>
 
-      <ChaosPanel regions={chaos.regions} down={chaos.down} />
+      <SystemStatus
+        health={health}
+        serving={chaos.serving}
+        degraded={chaos.degraded}
+        regions={chaos.regions}
+        down={chaos.down}
+      />
       <NewIncidentForm />
 
       <section className="mt-6 overflow-hidden rounded-lg border border-line">
