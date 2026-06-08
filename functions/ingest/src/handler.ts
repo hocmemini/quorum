@@ -62,6 +62,8 @@ export const handler = async (event: AlarmEvent): Promise<{ ok: boolean; inciden
       severity: parsed.severity,
       originRegion: parsed.originRegion,
       actor: 'cloudwatch',
+      // route scripted-alarm ingestion to the shared demo/alarms workspace (DEC-016)
+      orgId: process.env.ALARM_ORG_ID ?? 'demo',
     });
     return { ok: true, incidentId: parsed.incidentId };
   } finally {

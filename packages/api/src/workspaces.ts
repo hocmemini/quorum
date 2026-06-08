@@ -119,3 +119,15 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   );
   await resolveIncident(db, i3, ctx('dave', 'i3:res'));
 }
+
+/** Reset the demo workspace to its seed (clear judge clutter so it does not rot over judging). */
+export async function resetDemoWorkspace(db: Kysely<Database>, orgId = 'demo'): Promise<void> {
+  const ids = (
+    await db.selectFrom('incident').select('incident_id').where('org_id', '=', orgId).execute()
+  ).map((r) => r.incident_id);
+  if (ids.length > 0) {
+    await db.deleteFrom('incident_event').where('incident_id', 'in', ids).execute();
+    await db.deleteFrom('incident').where('incident_id', 'in', ids).execute();
+  }
+  await ensureWorkspace(db, orgId, 'Demo workspace');
+}
