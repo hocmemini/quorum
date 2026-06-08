@@ -54,11 +54,6 @@ data "aws_iam_policy_document" "monitor" {
     actions   = ["budgets:ViewBudget"]
     resources = ["*"]
   }
-  statement {
-    sid       = "InvokeIngest"
-    actions   = ["lambda:InvokeFunction"]
-    resources = ["arn:aws:lambda:*:*:function:quorum-ingest"]
-  }
 }
 
 resource "aws_iam_role_policy" "monitor" {

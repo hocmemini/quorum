@@ -79,6 +79,12 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   const sig = (
     await db.selectFrom('signal').select('signal_id').orderBy('signal_id').limit(3).execute()
   ).map((r) => r.signal_id);
+  const alarmSig = await db
+    .selectFrom('signal')
+    .select(['signal_id', 'name', 'severity'])
+    .where('source', '=', 'apigw-5xx')
+    .limit(1)
+    .executeTakeFirst();
 
   // i1: 5xx spike, escalated to sev1, then resolved.
   const i1 = id('i1');
@@ -213,6 +219,27 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   );
   await addNote(db, i3, 'Backlog cleared, consumer lag back to 0.', ctx('alice', 'i3:n3'));
   await resolveIncident(db, i3, ctx('alice', 'i3:res'));
+
+  // i4: alarm-shaped incident, the same data shape the ingest path produces (DEC-019): a CloudWatch
+  // alarm with its opening signal and affected service populated, so every workspace lands with one.
+  const i4 = id('i4');
+  await openIncident(
+    db,
+    {
+      incidentId: i4,
+      orgId,
+      signalId: alarmSig?.signal_id ?? sig[0] ?? null,
+      title: alarmSig?.name ?? 'API gateway 5xx alarm',
+      severity: alarmSig?.severity ?? 'sev2',
+    },
+    ctx('cloudwatch', 'i4:open'),
+  );
+  await addNote(
+    db,
+    i4,
+    'CloudWatch alarm apigw-5xx entered ALARM: 5xx error rate above the 1% SLO threshold.',
+    ctx('cloudwatch', 'i4:n1'),
+  );
 }
 
 /** Reset the demo workspace to its seed (clear judge clutter so it does not rot over judging). */

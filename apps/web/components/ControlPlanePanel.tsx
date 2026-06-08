@@ -96,8 +96,10 @@ export function ControlPlanePanel({
       />
 
       <p className="mt-3 font-mono text-xs text-muted">
-        spend {cost ? `$${cost.monthToDate.toFixed(2)} / $${cost.limit}` : '—'} · scale-to-zero ·
-        witness in {witness}
+        {cost
+          ? `running ~$${cost.monthToDate.toFixed(2)}/mo, scales to zero when idle`
+          : 'scales to zero when idle'}{' '}
+        · witness in {witness}
       </p>
 
       <TryThis />

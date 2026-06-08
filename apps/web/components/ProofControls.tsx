@@ -40,13 +40,8 @@ export function ProofControls({
       const res = await fetch(`/api/proof/${kind}`, { method: 'POST' });
       if (res.ok) {
         const d = await res.json();
-        if (kind === 'write') {
-          setB(null);
-          setW(d as WriteResult);
-        } else {
-          setW(null);
-          setB(d as BurstResult);
-        }
+        if (kind === 'write') setW(d as WriteResult);
+        else setB(d as BurstResult);
       }
     } finally {
       setBusy('');
@@ -54,11 +49,12 @@ export function ProofControls({
   }
 
   return (
-    <div className="mt-3">
+    <div className="mt-3 space-y-2">
+      {/* Hero tiles reflect the latest run-a-write only. */}
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-md border border-line bg-bg px-3 py-2">
           <div className="font-mono text-lg font-semibold text-fg">
-            {write != null ? `${write} ms` : 'run it'}
+            {write != null ? `${write} ms` : '--'}
           </div>
           <div className="mt-0.5 text-[11px] text-muted">write commit (local region)</div>
         </div>
@@ -73,13 +69,15 @@ export function ProofControls({
               <span className={cn('size-1.5 rounded-full', w.confirmed ? 'bg-ok' : 'bg-sev1')} />
             ) : null}
             <span className="font-mono text-lg font-semibold text-fg">
-              {cross != null ? `${cross} ms` : 'run it'}
+              {cross != null ? `${cross} ms` : '--'}
             </span>
           </div>
           <div className="mt-0.5 text-[11px] text-muted">cross-region confirmed visible</div>
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+
+      {/* run-a-write: button + its own result block */}
+      <div>
         <button
           type="button"
           onClick={() => run('write')}
@@ -88,6 +86,15 @@ export function ProofControls({
         >
           {busy === 'write' ? 'running...' : 'Run a cross-region write'}
         </button>
+        <div className="mt-1 font-mono text-xs text-muted">
+          {w
+            ? `local commit ${w.commitMs} ms · cross-region confirmed ${w.crossRegionMs} ms · read back ${w.confirmed ? 'identical' : 'MISMATCH'} in ${w.readBackMs} ms (${w.wroteRegion} -> ${w.readRegion})`
+            : 'writes in one region, confirms it identical in the other'}
+        </div>
+      </div>
+
+      {/* burst: button + its own result block */}
+      <div>
         <button
           type="button"
           onClick={() => run('burst')}
@@ -96,13 +103,11 @@ export function ProofControls({
         >
           {busy === 'burst' ? 'bursting...' : 'Burst: 50 concurrent'}
         </button>
-      </div>
-      <div className="mt-1.5 font-mono text-xs text-muted">
-        {w
-          ? `${w.confirmed ? 'confirmed identical' : 'MISMATCH'} from ${w.readRegion} after ${w.readBackMs} ms (wrote ${w.wroteRegion})`
-          : b
-            ? `${b.committed}/${b.total} committed, ${b.conflicts} conflicts, p50 ${b.p50Ms} ms (${b.minMs}..${b.maxMs} ms spread)`
-            : 'write in one region and confirm it in the other, or burst concurrent writes across both'}
+        <div className="mt-1 font-mono text-xs text-muted">
+          {b
+            ? `${b.committed} of ${b.total} committed · ${b.conflicts} conflicts · ${b.minMs} to ${b.maxMs} ms spread`
+            : 'fires 50 concurrent writes across both regions'}
+        </div>
       </div>
     </div>
   );
