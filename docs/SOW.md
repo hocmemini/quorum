@@ -315,6 +315,8 @@ The submission window is May 27 to Jun 29, 2026. This project is greenfield as o
 - 2026-06-07: DEC-012, the DSQL monitor is repurposed as a live observability layer for the demo + judging window (war-room UI reads Quorum/DSQLMonitor metrics; isolated probe table; within budget). Bundle confirmed loadable. Carrying on with WP-3.
 - 2026-06-07: Added WP-12, editorial and hygiene pass with pre-submission and public-flip modes, as a Phase 5 gate and a precondition for any public flip.
 - 2026-06-07: Ran WP-12 editorial pass (MODE=pre-submission). Mechanical hygiene fixes applied (unicode ASCII-fold, markdown voice pass, username-path redaction, .env.example fix, tooling and configs); fresh-clone gate PASS; report at docs/EDITORIAL-2026-06-07-pre-submission.md. Result PASS, 2 minor items for review.
+- 2026-06-07: Frontend compliance check (h01.devpost.com rules): the hard requirement is to DEPLOY the front end on Vercel or v0.app and use an AWS database (we use Aurora DSQL). Building with v0 is optional/encouraged, not mandatory, so WP-6 ships a Next.js app deployed on Vercel with v0 as optional polish.
+- 2026-06-07: Built the full pure-CC vertical (WP-3 OCC, WP-4 domain, WP-5 API, the region-failover data layer carrying DEC-006 into the app, WP-7 ingestion fn+infra, WP-8 app IaC, WP-10 seed, WP-6 war-room frontend, WP-9 chaos hook, WP-11 gated integration tests) plus the Vercel deploy path. 47 tests. Remaining: go-live (persistent infra + Vercel deploy + AWS keys for the Vercel runtime).
 
 ---
 
