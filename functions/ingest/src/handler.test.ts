@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseAlarmEvent } from './handler';
+import { handler, parseAlarmEvent } from './handler';
 
 const alarmEvent = {
   source: 'aws.cloudwatch',
@@ -42,4 +42,22 @@ describe('parseAlarmEvent', () => {
     ).toBeNull();
     expect(parseAlarmEvent({ ...alarmEvent, source: 'aws.other' })).toBeNull();
   });
+});
+
+// Live ingestion smoke (WP-11). Gated on a real DSQL endpoint; runs at go-live.
+const LIVE = !!process.env.DSQL_ENDPOINT_PRIMARY;
+
+describe.skipIf(!LIVE)('handler integration (live DSQL)', () => {
+  it('opens an incident from a CloudWatch alarm event', async () => {
+    const res = await handler({
+      source: 'aws.cloudwatch',
+      region: process.env.DSQL_REGION ?? 'us-east-1',
+      detail: {
+        alarmName: `smoke-${Date.now()}`,
+        state: { value: 'ALARM', timestamp: new Date().toISOString() },
+      },
+    });
+    expect(res.ok).toBe(true);
+    expect(res.incidentId).toBeTruthy();
+  }, 60_000);
 });
