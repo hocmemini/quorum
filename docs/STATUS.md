@@ -105,8 +105,12 @@ Tailwind build tooling.
 - Pool `maxLifetime` under the one-hour session cap, with jitter and staggered recycles (decision 4);
   not set.
 - Per-connection IAM token (decision 5): already implemented, no change.
-- Warm cross-region latency re-measurement, pooled, n>=200, from us-east-1 (decision 6); pending
-  go-live, and it gates any latency claim in the write-up.
+- Warm cross-region latency re-measurement (decision 6): DONE 2026-06-08, n=200 from us-east-1, warm
+  write p50=82 ms / p99=90 ms after a 617 ms one-time cold connect; failover ~57 ms warm survivor,
+  ~595 ms cold survivor. Confirms the spike's ~754 ms was cold-connect cost. Implement the keep-alive
+  (decisions 1-4) so judge-triggered failover lands on a warm survivor.
+- Operator DSQL connect on the app clusters is granted out-of-band (an inline IAM policy on the
+  deploy user); parameterize it in infra/app (an operator-principal var) for reproducibility.
 
 ## 6. Risks / watch items
 

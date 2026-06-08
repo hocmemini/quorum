@@ -38,11 +38,13 @@ stage_functions() {
   echo "== functions: build + deploy monitor and ingest =="
   pnpm --filter @quorum/dsql-monitor build
   pnpm --filter @quorum/ingest build
-  local host arns
+  local host sec arns
   host="$(app_output -raw primary_endpoint)"
+  sec="$(app_output -raw secondary_endpoint)"
   arns="$(app_output -json cluster_arns)"
   tf_init_remote monitor monitor.tfstate
-  terraform -chdir="$ROOT/infra/monitor" apply -input=false -auto-approve -var="cluster_arns=$arns"
+  terraform -chdir="$ROOT/infra/monitor" apply -input=false -auto-approve \
+    -var="cluster_arns=$arns" -var="dsql_endpoint_use1=$host" -var="dsql_endpoint_use2=$sec"
   tf_init_remote ingest ingest.tfstate
   terraform -chdir="$ROOT/infra/ingest" apply -input=false -auto-approve \
     -var="dsql_endpoint=$host" -var="cluster_arns=$arns"
