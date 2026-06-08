@@ -94,7 +94,8 @@
     "lucide",
     "Tailwind",
     "postcss",
-    "presentational"
+    "presentational",
+    "triggerable"
   ],
   "ignorePaths": [
     "node_modules/**",
