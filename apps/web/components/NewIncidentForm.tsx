@@ -3,13 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
 
-const fieldStyle = {
-  background: 'var(--panel)',
-  color: 'var(--text)',
-  border: '1px solid var(--border)',
-  borderRadius: 6,
-  padding: '0.5rem',
-} as const;
+const field =
+  'rounded-md border border-line bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent';
 
 export function NewIncidentForm() {
   const router = useRouter();
@@ -44,25 +39,26 @@ export function NewIncidentForm() {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}
-    >
+    <form onSubmit={submit} className="mt-4 flex flex-wrap gap-2">
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="New incident title"
-        style={{ ...fieldStyle, flex: 1, minWidth: 220 }}
+        className={`${field} min-w-56 flex-1`}
       />
-      <select value={severity} onChange={(e) => setSeverity(e.target.value)} style={fieldStyle}>
+      <select value={severity} onChange={(e) => setSeverity(e.target.value)} className={field}>
         <option value="sev1">sev1</option>
         <option value="sev2">sev2</option>
         <option value="sev3">sev3</option>
       </select>
-      <button type="submit" disabled={busy} style={{ ...fieldStyle, cursor: 'pointer' }}>
+      <button
+        type="submit"
+        disabled={busy}
+        className="rounded-md border border-line bg-raised px-3 py-1.5 text-sm hover:border-accent disabled:opacity-50"
+      >
         {busy ? '...' : 'Open incident'}
       </button>
-      {error ? <span style={{ color: 'var(--sev1)', width: '100%' }}>{error}</span> : null}
+      {error ? <span className="w-full text-xs text-sev1">{error}</span> : null}
     </form>
   );
 }

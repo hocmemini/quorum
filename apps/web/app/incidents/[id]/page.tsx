@@ -1,5 +1,6 @@
 import { getIncidentState } from '@quorum/db';
 import Link from 'next/link';
+import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { IncidentActions } from '@/components/IncidentActions';
 import { chaosState, query } from '@/lib/db';
 
@@ -16,56 +17,51 @@ export default async function IncidentPage(props: { params: Promise<{ id: string
   const { serving, degraded } = await chaosState();
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 820, margin: '0 auto' }}>
-      <Link href="/" style={{ color: 'var(--muted)' }}>
+    <main className="mx-auto max-w-3xl px-6 py-8">
+      <Link href="/" className="text-sm text-muted hover:text-fg">
         &larr; war room
       </Link>
-      <h1 style={{ marginBottom: 0 }}>{s.title ?? id}</h1>
-      <p style={{ color: 'var(--muted)', marginTop: 4 }}>
-        {s.status} | severity {s.severity ?? '-'} | opened {fmt(s.openedAt)}
-        {s.resolvedAt ? ` | resolved ${fmt(s.resolvedAt)}` : ''} | region {serving}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <h1 className="text-xl font-semibold tracking-tight">{s.title ?? id}</h1>
+        <StatusBadge status={s.status} />
+        <SeverityBadge severity={s.severity} />
+      </div>
+      <p className="mt-1 font-mono text-xs text-muted">
+        opened {fmt(s.openedAt)}
+        {s.resolvedAt ? ` / resolved ${fmt(s.resolvedAt)}` : ''} / region {serving}
         {degraded ? ' (failover active)' : ''}
       </p>
 
       <IncidentActions incidentId={id} />
 
-      <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem', color: 'var(--muted)' }}>Action items</h2>
+      <section className="mt-6">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Action items</h2>
         {s.actions.length === 0 ? (
-          <p style={{ color: 'var(--muted)' }}>None.</p>
+          <p className="mt-2 text-sm text-muted">None.</p>
         ) : (
-          <ul>
+          <ul className="mt-2 space-y-1 text-sm">
             {s.actions.map((a) => (
               <li key={a.actionId}>
                 {a.title}
-                {a.assignee ? (
-                  <em style={{ color: 'var(--muted)' }}> &rarr; {a.assignee}</em>
-                ) : null}
+                {a.assignee ? <span className="text-muted"> &rarr; {a.assignee}</span> : null}
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem', color: 'var(--muted)' }}>Timeline</h2>
+      <section className="mt-6">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Timeline</h2>
         {s.notes.length === 0 ? (
-          <p style={{ color: 'var(--muted)' }}>No notes yet.</p>
+          <p className="mt-2 text-sm text-muted">No notes yet.</p>
         ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+          <ul className="mt-2 space-y-2">
             {s.notes.map((n) => (
-              <li
-                key={n.id}
-                style={{
-                  borderLeft: '2px solid var(--border)',
-                  padding: '0.25rem 0.75rem',
-                  marginBottom: 8,
-                }}
-              >
-                <div style={{ color: 'var(--muted)', fontSize: 12 }}>
-                  {fmt(n.at)} | {n.actor ?? 'system'}
+              <li key={n.id} className="border-l-2 border-line pl-3">
+                <div className="font-mono text-xs text-muted">
+                  {fmt(n.at)} &middot; {n.actor ?? 'system'}
                 </div>
-                <div>{n.body}</div>
+                <div className="text-sm">{n.body}</div>
               </li>
             ))}
           </ul>

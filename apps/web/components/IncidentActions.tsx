@@ -3,13 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
 
-const field = {
-  background: 'var(--panel)',
-  color: 'var(--text)',
-  border: '1px solid var(--border)',
-  borderRadius: 6,
-  padding: '0.5rem',
-} as const;
+const field =
+  'rounded-md border border-line bg-surface px-3 py-1.5 text-sm outline-none focus:border-accent';
+const btn =
+  'rounded-md border border-line bg-raised px-3 py-1.5 text-sm hover:border-accent disabled:opacity-50';
 
 export function IncidentActions({ incidentId }: { incidentId: string }) {
   const router = useRouter();
@@ -38,24 +35,24 @@ export function IncidentActions({ incidentId }: { incidentId: string }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-      <form onSubmit={addNote} style={{ display: 'flex', gap: '0.5rem' }}>
+    <div className="mt-4 flex flex-col gap-3">
+      <form onSubmit={addNote} className="flex gap-2">
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Add a note to the timeline"
-          style={{ ...field, flex: 1 }}
+          className={`${field} flex-1`}
         />
-        <button type="submit" disabled={busy} style={{ ...field, cursor: 'pointer' }}>
+        <button type="submit" disabled={busy} className={btn}>
           Note
         </button>
       </form>
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={busy}
           onClick={() => post({ kind: 'status', status: 'acknowledged' })}
-          style={{ ...field, cursor: 'pointer' }}
+          className={btn}
         >
           Acknowledge
         </button>
@@ -63,7 +60,7 @@ export function IncidentActions({ incidentId }: { incidentId: string }) {
           type="button"
           disabled={busy}
           onClick={() => post({ kind: 'status', status: 'open' })}
-          style={{ ...field, cursor: 'pointer' }}
+          className={btn}
         >
           Reopen
         </button>
@@ -71,7 +68,7 @@ export function IncidentActions({ incidentId }: { incidentId: string }) {
           type="button"
           disabled={busy}
           onClick={() => post({ kind: 'resolve' })}
-          style={{ ...field, cursor: 'pointer' }}
+          className={btn}
         >
           Resolve
         </button>

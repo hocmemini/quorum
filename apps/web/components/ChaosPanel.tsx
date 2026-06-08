@@ -2,22 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
-const panel = {
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  padding: '0.75rem 1rem',
-  background: 'var(--panel)',
-  marginTop: '1rem',
-} as const;
-
-const btn = {
-  background: 'var(--bg)',
-  border: '1px solid var(--border)',
-  borderRadius: 6,
-  padding: '0.4rem 0.6rem',
-  cursor: 'pointer',
-} as const;
+import { cn } from '@/lib/utils';
 
 export function ChaosPanel({ regions, down }: { regions: string[]; down: string[] }) {
   const router = useRouter();
@@ -40,14 +25,16 @@ export function ChaosPanel({ regions, down }: { regions: string[]; down: string[
   }
 
   return (
-    <div style={panel}>
-      <strong>Resilience demo</strong>
-      <span style={{ color: 'var(--muted)' }}>
-        {' '}
-        — simulate a region outage. This session fails over to a survivor; active-active means no
-        data is lost. (Scoped to your browser only.)
-      </span>
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+    <div className="mt-5 rounded-lg border border-line bg-surface p-4">
+      <div className="flex items-center gap-2">
+        <span className="size-2 rounded-full bg-accent" />
+        <h2 className="text-sm font-semibold">Resilience demo</h2>
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        Simulate a region outage. This session fails over to a survivor; active-active means no data
+        is lost. Scoped to your browser only.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
         {regions.map((r) => {
           const isDown = downSet.has(r);
           return (
@@ -56,11 +43,12 @@ export function ChaosPanel({ regions, down }: { regions: string[]; down: string[
               type="button"
               disabled={busy}
               onClick={() => toggle(r)}
-              style={{
-                ...btn,
-                borderColor: isDown ? 'var(--sev1)' : 'var(--border)',
-                color: isDown ? 'var(--sev1)' : 'var(--text)',
-              }}
+              className={cn(
+                'rounded-md border px-3 py-1.5 font-mono text-xs transition-colors disabled:opacity-50',
+                isDown
+                  ? 'border-sev1/50 bg-sev1/10 text-sev1'
+                  : 'border-line bg-raised hover:border-accent',
+              )}
             >
               {isDown ? `${r}: DOWN (restore)` : `Simulate ${r} outage`}
             </button>
