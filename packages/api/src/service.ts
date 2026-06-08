@@ -124,6 +124,9 @@ export async function setStatus(
 ): Promise<{ deduped: boolean }> {
   const incidentId = reqStr(req.incidentId, 'incidentId');
   const status = reqStatus(req.status);
+  // No-op if the incident is already in this status: append no event (DEC-005 / DEC-018).
+  const current = await getIncidentState(db, incidentId);
+  if (current.status === status) return { deduped: true };
   return changeStatus(db, incidentId, status, ctxFrom(req));
 }
 

@@ -1,6 +1,8 @@
 import type { MonitorSnapshot } from '@quorum/db';
+import { ArchDiagram } from '@/components/ArchDiagram';
 import { ChaosPanel } from '@/components/ChaosPanel';
 import { ProofControls } from '@/components/ProofControls';
+import { TryThis } from '@/components/TryThis';
 import { cn } from '@/lib/utils';
 
 type Health = { region: string; up: boolean; latencyMs: number | null };
@@ -40,6 +42,8 @@ export function ControlPlanePanel({
             : `serving ${serving}${degraded ? ' · failover active' : ''}`}
         </span>
       </div>
+
+      <ArchDiagram serving={serving} down={down} regions={regions} witness={witness} />
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         {regions.map((r) => {
@@ -95,6 +99,8 @@ export function ControlPlanePanel({
         spend {cost ? `$${cost.monthToDate.toFixed(2)} / $${cost.limit}` : '—'} · scale-to-zero ·
         witness in {witness}
       </p>
+
+      <TryThis />
 
       <ChaosPanel regions={regions} down={down} />
 
