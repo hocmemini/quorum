@@ -221,3 +221,25 @@ spike's ~754 ms was cold-connection cost, not a DSQL limit. Fixed a golive.sh bu
 stage was not passing the monitor's endpoint vars). Wiped the test data (batched DELETE) and
 re-seeded a clean demo. Spend to date: $0 (budget actual 0.00 / 20.00); the promotional-credit
 balance is console-only and was not consumed.
+
+## 2026-06-08: Connection warmth, observability panel, workspace tenancy, Vercel deploy + OIDC
+
+Shipped the full backlog. (A) DEC-015 connection warmth: iad1 region pin, staggered keep-alive on
+both region pools, `maxLifetimeSeconds` under the one-hour cap with jitter, `attachDatabasePool`, and
+an OIDC-capable signer. A system-status / resilience panel on the war room (live per-region health +
+latency, the observed serving region, chaos toggles). (B) DEC-016 workspace tenancy: additive
+migration 0005 (`incident.org_id` + a workspace table), name-your-workspace onboarding,
+join-by-link-or-code, an always-available demo workspace with a daily reset cron, alarm routing, and
+2.5 s polling; verified live (create, write, list, and org isolation). (C) The serving-region
+indicator now reflects the actually-observed region, chaos restore returns to the primary, and the
+connection-error classifier was validated against real refused / dns-failure / timeout shapes.
+
+(D) Deployed to Vercel, CLI-only on the siloed hackathon account (preflight-confirmed, no git
+provider connected). Live on the multi-region DSQL stack. Brought up on a cluster-scoped static key,
+then migrated the runtime to Vercel OIDC (an AWS IAM role with web-identity trust) and deleted the
+static key, so zero static credentials remain; verified by the app still serving with no key.
+Vercel's Hobby commit-author policy blocks CLI deploys, so deploys run with git metadata temporarily
+hidden. (E) The EC2 credit activity was completed in the console; a db.t3.micro RDS instance was
+created for the RDS activity, left up pending verification before teardown. (F) Re-ran the live E2E
+(48 pass; warm write p50 ~89 ms, failover ~57 ms warm / ~553 ms cold) and the deployed
+front-and-back flow. Spend $0 within the $20 budget.
