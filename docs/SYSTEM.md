@@ -27,6 +27,11 @@ persuasion docs, read this end to end: several headline pieces are new to you.
    so the dashboard reads through the failover layer (no CloudWatch from Vercel) and survives a
    region loss itself. Incidents show the opening signal, affected service, append-only timeline,
    and cross-region consistency. Deep per-service metrics are deferred to Grafana/Datadog in-product.
+10. **Interactive proof + demo integrity (DEC-018):** the headline DSQL numbers are judge-triggered
+    and measured per click (run-a-write reports real commit / cross-region / read-back latency; a
+    50-write concurrent burst reports all-committed / zero-conflicts / spread), a live mini
+    architecture diagram reacts to failover, and the demo carries a real alarm-opened incident
+    (CloudWatch alarm -> ingest Lambda -> DSQL) with a populated opening signal.
 
 ---
 

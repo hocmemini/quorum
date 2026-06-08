@@ -43,6 +43,14 @@ The stack is deployed and verified end-to-end against the live clusters.
   affected service, append-only timeline, projected state, and cross-region consistency; deep
   per-service metrics are deferred to Grafana/Datadog in-product. Verified live: the panel reacts to
   a failover toggle (serving flips to the survivor and back).
+- **Interactive proof (DEC-018):** the headline DSQL numbers are judge-triggered and measured per
+  click, not static. "Run a cross-region write" does a real write in one region and reads it back
+  from the other (measured commit / cross-region / read-back latency that varies per run); "Burst:
+  50 concurrent" reports all committed, zero conflicts, and the latency spread. A live mini
+  architecture diagram (two regions + witness) reacts to failover, a Try-this strip signposts it,
+  and re-acknowledging an already-acknowledged incident appends no event. The demo carries a real
+  alarm-opened incident (CloudWatch alarm -> ingest Lambda -> DSQL) with a populated opening signal,
+  refreshed by the monitor.
 
 ## 1. Snapshot
 
