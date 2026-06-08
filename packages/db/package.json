@@ -13,6 +13,7 @@
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
     "wipe": "tsx src/wipe.ts",
+    "bench": "tsx src/bench.ts",
     "test": "vitest run"
   },
   "dependencies": {
