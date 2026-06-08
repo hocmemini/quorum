@@ -55,17 +55,30 @@ export async function chaosState(): Promise<{
   down: string[];
   serving: string;
   degraded: boolean;
+  allDown: boolean;
+  witness: string;
 }> {
   const down = await cookieDownRegions();
-  try {
-    await query((db) => db.selectFrom('service').select('service_id').limit(1).execute());
-  } catch {
-    // ignore; serving falls back to the last-served region below
-  }
   const regions = getDb().regions();
-  const serving = getDb().current();
-  const primary = regions[0] ?? serving;
-  return { regions, down, serving, degraded: serving !== primary };
+  const allDown = regions.length > 0 && regions.every((r) => down.includes(r));
+  let serving = 'none';
+  if (!allDown) {
+    try {
+      await query((db) => db.selectFrom('service').select('service_id').limit(1).execute());
+    } catch {
+      // ignore; serving falls back to the last-served region below
+    }
+    serving = getDb().current();
+  }
+  const primary = regions[0] ?? '';
+  return {
+    regions,
+    down,
+    serving,
+    degraded: allDown || serving !== primary,
+    allDown,
+    witness: process.env.DSQL_WITNESS_REGION ?? 'us-west-2',
+  };
 }
 
 /** Live per-region health for the system-status panel: probe each pool (chaos regions show down). */
