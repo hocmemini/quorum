@@ -1,39 +1,9 @@
 import type { MonitorSnapshot } from '@quorum/db';
 import { ChaosPanel } from '@/components/ChaosPanel';
+import { ProofControls } from '@/components/ProofControls';
 import { cn } from '@/lib/utils';
 
 type Health = { region: string; up: boolean; latencyMs: number | null };
-
-function Metric({
-  label,
-  value,
-  tone,
-  ok,
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-  ok?: boolean | undefined;
-}) {
-  return (
-    <div className="rounded-md border border-line bg-bg px-3 py-2">
-      <div className="flex items-center gap-1.5">
-        {ok !== undefined ? (
-          <span className={cn('size-1.5 shrink-0 rounded-full', ok ? 'bg-ok' : 'bg-sev1')} />
-        ) : null}
-        <span
-          className={cn(
-            'font-mono text-sm font-semibold',
-            tone === 'ok' ? 'text-ok' : tone === 'sev1' ? 'text-sev1' : 'text-fg',
-          )}
-        >
-          {value}
-        </span>
-      </div>
-      <div className="mt-0.5 text-[11px] text-muted">{label}</div>
-    </div>
-  );
-}
 
 export function ControlPlanePanel({
   snapshot,
@@ -56,7 +26,6 @@ export function ControlPlanePanel({
 }) {
   const readOf = (r: string) => health.find((h) => h.region === r)?.latencyMs ?? null;
   const cost = snapshot?.cost;
-  const consistency = snapshot?.consistency;
 
   return (
     <section className="mt-5 rounded-lg border border-line bg-surface p-4">
@@ -117,33 +86,14 @@ export function ControlPlanePanel({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Metric
-          label="write p50 / p99 (warm)"
-          value={snapshot ? `${snapshot.writeP50Ms} / ${snapshot.writeP99Ms} ms` : 'warming'}
-        />
-        <Metric
-          label="cross-region consistency"
-          value={consistency ? `${consistency.crossRegionMs} ms` : '—'}
-          tone={consistency?.pass ? 'ok' : 'sev1'}
-          ok={consistency?.pass ?? undefined}
-        />
-        <Metric
-          label="warm failover"
-          value={snapshot ? `${snapshot.failover.warmFailoverMs} ms` : '—'}
-        />
-        <Metric
-          label="spend / month"
-          value={cost ? `$${cost.monthToDate.toFixed(2)} / $${cost.limit}` : '—'}
-        />
-      </div>
+      <ProofControls
+        initWriteMs={snapshot?.writeP50Ms ?? null}
+        initCrossMs={snapshot?.consistency?.crossRegionMs ?? null}
+      />
 
-      <p className="mt-2 text-xs text-muted">
-        {consistency?.pass
-          ? `Strongly consistent: a write in one region is confirmed visible in the other in ${consistency.crossRegionMs} ms.`
-          : 'Consistency check pending.'}{' '}
-        Active-active across two regions with a witness in {witness}; losing one region serves from
-        the survivor, and the witness keeps the quorum durable.
+      <p className="mt-3 font-mono text-xs text-muted">
+        spend {cost ? `$${cost.monthToDate.toFixed(2)} / $${cost.limit}` : '—'} · scale-to-zero ·
+        witness in {witness}
       </p>
 
       <ChaosPanel regions={regions} down={down} />
