@@ -95,7 +95,9 @@
     "Tailwind",
     "postcss",
     "presentational",
-    "triggerable"
+    "triggerable",
+    "alives",
+    "userguide"
   ],
   "ignorePaths": [
     "node_modules/**",

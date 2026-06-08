@@ -96,6 +96,18 @@ Claude skills).
 the editorial gate before Jun 29 and the public-flip pass after judging; add a knip entry for the
 Tailwind build tooling.
 
+**DEC-015 follow-ups (connection warmth; close before/at go-live; no code changed in the DEC commit):**
+
+- `vercel.json` needs `regions: ["iad1"]` (decision 1); not yet set.
+- Fluid Compute + `attachDatabasePool` for idle-connection release (decision 2); the pool is already
+  a module-scope singleton.
+- `SELECT 1` keep-alive on both region pools + a Vercel Cron warm-up endpoint (decision 3); not built.
+- Pool `maxLifetime` under the one-hour session cap, with jitter and staggered recycles (decision 4);
+  not set.
+- Per-connection IAM token (decision 5): already implemented, no change.
+- Warm cross-region latency re-measurement, pooled, n>=200, from us-east-1 (decision 6); pending
+  go-live, and it gates any latency claim in the write-up.
+
 ## 6. Risks / watch items
 
 - Live end-to-end (migrations, monitor, ingestion smoke, the deployed app) is validated only after
