@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+import { runWithFailover } from './failover';
+import { isConnectionError } from './occ';
+
+const connErr = (): Error =>
+  Object.assign(new Error('connection terminated'), { code: 'ECONNRESET' });
+
+describe('runWithFailover', () => {
+  it('returns the start region on success', async () => {
+    let served = -1;
+    const r = await runWithFailover([async () => 'a', async () => 'b'], 0, (i) => {
+      served = i;
+    });
+    expect(r).toBe('a');
+    expect(served).toBe(0);
+  });
+
+  it('fails over to the next region on a connection error', async () => {
+    let served = -1;
+    const r = await runWithFailover(
+      [
+        async () => {
+          throw connErr();
+        },
+        async () => 'b',
+      ],
+      0,
+      (i) => {
+        served = i;
+      },
+    );
+    expect(r).toBe('b');
+    expect(served).toBe(1);
+  });
+
+  it('starts at the sticky index and wraps around', async () => {
+    let served = -1;
+    const r = await runWithFailover(
+      [
+        async () => 'a',
+        async () => {
+          throw connErr();
+        },
+      ],
+      1,
+      (i) => {
+        served = i;
+      },
+    );
+    expect(r).toBe('a');
+    expect(served).toBe(0);
+  });
+
+  it('throws non-connection errors immediately (no failover)', async () => {
+    let calls = 0;
+    await expect(
+      runWithFailover(
+        [
+          async () => {
+            calls++;
+            throw new Error('validation');
+          },
+          async () => {
+            calls++;
+            return 'b';
+          },
+        ],
+        0,
+        () => {},
+      ),
+    ).rejects.toThrow('validation');
+    expect(calls).toBe(1);
+  });
+
+  it('throws when every region has a connection error', async () => {
+    await expect(
+      runWithFailover(
+        [
+          async () => {
+            throw connErr();
+          },
+          async () => {
+            throw connErr();
+          },
+        ],
+        0,
+        () => {},
+      ),
+    ).rejects.toThrow(/connection/i);
+  });
+});
+
+describe('isConnectionError', () => {
+  it('detects socket and pg connection-class errors', () => {
+    expect(isConnectionError(Object.assign(new Error('x'), { code: 'ECONNREFUSED' }))).toBe(true);
+    expect(isConnectionError(Object.assign(new Error('x'), { code: '08006' }))).toBe(true);
+    expect(isConnectionError(new Error('Connection terminated unexpectedly'))).toBe(true);
+  });
+
+  it('ignores serialization and unrelated errors', () => {
+    expect(isConnectionError(Object.assign(new Error('x'), { code: '40001' }))).toBe(false);
+    expect(isConnectionError(new Error('validation failed'))).toBe(false);
+  });
+});
