@@ -4,3 +4,4 @@ packages:
   - "functions/*"
 allowBuilds:
   esbuild: true
+  sharp: true

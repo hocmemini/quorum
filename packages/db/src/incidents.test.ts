@@ -28,6 +28,7 @@ describe('projectIncident', () => {
         created_at: t(1),
       }),
       evt({
+        event_id: 'evt-note',
         type: 'note.added',
         payload: { body: 'investigating' },
         actor: 'alice',
@@ -49,7 +50,9 @@ describe('projectIncident', () => {
     expect(state.status).toBe('resolved');
     expect(state.title).toBe('DB down');
     expect(state.severity).toBe('sev2');
-    expect(state.notes).toEqual([{ at: t(2), actor: 'alice', body: 'investigating' }]);
+    expect(state.notes).toEqual([
+      { id: 'evt-note', at: t(2), actor: 'alice', body: 'investigating' },
+    ]);
     expect(state.actions).toEqual([
       { actionId: 'a1', title: 'failover', assignee: 'bob', createdAt: t(3) },
     ]);

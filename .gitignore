@@ -9,6 +9,10 @@ build/
 out/
 *.zip
 *.tsbuildinfo
+.next/
+
+# --- Vercel (project link holds org/project IDs, DEC-008) ---
+.vercel/
 
 # --- Environment & secrets (repo goes public later - be strict) ---
 .env

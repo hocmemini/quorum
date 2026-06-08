@@ -6,6 +6,7 @@ import type { Database, IncidentEvent, IncidentEventType, NewIncidentEvent } fro
 export type IncidentStatus = 'open' | 'acknowledged' | 'resolved';
 
 export interface IncidentNote {
+  id: string;
   at: Date;
   actor: string | null;
   body: string;
@@ -179,7 +180,12 @@ export function projectIncident(
         state.status = 'open';
         break;
       case 'note.added':
-        state.notes.push({ at: e.created_at, actor: e.actor, body: asString(p.body) ?? '' });
+        state.notes.push({
+          id: e.event_id,
+          at: e.created_at,
+          actor: e.actor,
+          body: asString(p.body) ?? '',
+        });
         break;
       case 'action.created':
         state.actions.push({
