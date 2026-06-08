@@ -7,7 +7,7 @@ import {
   setStatus,
   ValidationError,
 } from '@quorum/api';
-import { getDb } from '@/lib/db';
+import { chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -20,15 +20,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     return Response.json({ error: 'invalid JSON body' }, { status: 400 });
   }
 
-  const db = getDb();
+  const { serving } = await chaosState();
   const base = {
     incidentId: id,
-    originRegion: db.current(),
+    originRegion: serving,
     actor: typeof body.actor === 'string' ? body.actor : 'web',
   };
 
   try {
-    const result = await db.run((k) => {
+    const result = await query((k) => {
       switch (body.kind) {
         case 'note':
           return appendNote(k, { ...base, body: body.body });

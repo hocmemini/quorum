@@ -8,9 +8,19 @@ export interface RegionEndpoint {
   host: string;
 }
 
+/** The Kysely handle a failover operation receives (lets consumers avoid a direct kysely import). */
+export type AppDb = Kysely<Database>;
+
 export interface FailoverDb {
-  /** Run an operation against the current region; on a connection error, fail over and retry. */
-  run<T>(fn: (db: Kysely<Database>) => Promise<T>): Promise<T>;
+  /**
+   * Run an operation against the current region; on a connection error, fail over and retry.
+   * `opts.downRegions` adds request-scoped partitioned regions (the judge-facing chaos demo),
+   * merged with any configured ones.
+   */
+  run<T>(
+    fn: (db: Kysely<Database>) => Promise<T>,
+    opts?: { downRegions?: Iterable<string> },
+  ): Promise<T>;
   /** Region that served the last successful operation (or the configured primary). */
   current(): string;
   regions(): string[];
@@ -80,10 +90,14 @@ export function createFailoverDb(
   let current = 0;
 
   return {
-    run<T>(fn: (db: Kysely<Database>) => Promise<T>): Promise<T> {
+    run<T>(
+      fn: (db: Kysely<Database>) => Promise<T>,
+      opts: { downRegions?: Iterable<string> } = {},
+    ): Promise<T> {
+      const callDown = opts.downRegions ? new Set([...down, ...opts.downRegions]) : down;
       const attempts = states.map((s, i) => () => {
         const region = endpoints[i]?.region;
-        if (region && down.has(region)) {
+        if (region && callDown.has(region)) {
           return Promise.reject(
             Object.assign(new Error(`chaos: region ${region} marked down`), {
               code: 'ECONNREFUSED',

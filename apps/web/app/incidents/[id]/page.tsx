@@ -1,7 +1,7 @@
 import { getIncidentState } from '@quorum/db';
 import Link from 'next/link';
 import { IncidentActions } from '@/components/IncidentActions';
-import { getDb } from '@/lib/db';
+import { chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,8 +12,8 @@ function fmt(d: Date | null): string {
 
 export default async function IncidentPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const db = getDb();
-  const s = await db.run((k) => getIncidentState(k, id));
+  const s = await query((k) => getIncidentState(k, id));
+  const { serving, degraded } = await chaosState();
 
   return (
     <main style={{ padding: '2rem', maxWidth: 820, margin: '0 auto' }}>
@@ -23,7 +23,8 @@ export default async function IncidentPage(props: { params: Promise<{ id: string
       <h1 style={{ marginBottom: 0 }}>{s.title ?? id}</h1>
       <p style={{ color: 'var(--muted)', marginTop: 4 }}>
         {s.status} | severity {s.severity ?? '-'} | opened {fmt(s.openedAt)}
-        {s.resolvedAt ? ` | resolved ${fmt(s.resolvedAt)}` : ''} | region {db.current()}
+        {s.resolvedAt ? ` | resolved ${fmt(s.resolvedAt)}` : ''} | region {serving}
+        {degraded ? ' (failover active)' : ''}
       </p>
 
       <IncidentActions incidentId={id} />

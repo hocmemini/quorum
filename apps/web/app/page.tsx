@@ -1,7 +1,8 @@
 import { listIncidents } from '@quorum/api';
 import Link from 'next/link';
+import { ChaosPanel } from '@/components/ChaosPanel';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
-import { getDb } from '@/lib/db';
+import { chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,17 +18,21 @@ function fmt(d: Date | null): string {
 }
 
 export default async function Home() {
-  const db = getDb();
-  const incidents = await db.run((k) => listIncidents(k, { limit: 50 }));
+  const incidents = await query((k) => listIncidents(k, { limit: 50 }));
+  const chaos = await chaosState();
 
   return (
     <main style={{ padding: '2rem', maxWidth: 960, margin: '0 auto' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <h1 style={{ margin: 0 }}>Quorum</h1>
-        <span style={{ color: 'var(--muted)' }}>serving region: {db.current()}</span>
+        <span style={{ color: chaos.degraded ? 'var(--sev2)' : 'var(--muted)' }}>
+          serving region: {chaos.serving}
+          {chaos.degraded ? ' (failover active)' : ''}
+        </span>
       </header>
       <p style={{ color: 'var(--muted)' }}>Incident command plane on multi-region Aurora DSQL.</p>
 
+      <ChaosPanel regions={chaos.regions} down={chaos.down} />
       <NewIncidentForm />
 
       <section style={{ marginTop: '1.5rem' }}>

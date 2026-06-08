@@ -1,13 +1,13 @@
 import { createIncident, listIncidents, ValidationError } from '@quorum/api';
-import { getDb } from '@/lib/db';
+import { chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const db = getDb();
-  const incidents = await db.run((k) => listIncidents(k, { limit: 50 }));
-  return Response.json({ incidents, region: db.current() });
+  const incidents = await query((k) => listIncidents(k, { limit: 50 }));
+  const { serving } = await chaosState();
+  return Response.json({ incidents, region: serving });
 }
 
 export async function POST(req: Request) {
@@ -18,10 +18,10 @@ export async function POST(req: Request) {
     return Response.json({ error: 'invalid JSON body' }, { status: 400 });
   }
   const { title, severity } = (body ?? {}) as Record<string, unknown>;
-  const db = getDb();
+  const { serving } = await chaosState();
   try {
-    const result = await db.run((k) =>
-      createIncident(k, { title, severity, originRegion: db.current(), actor: 'web' }),
+    const result = await query((k) =>
+      createIncident(k, { title, severity, originRegion: serving, actor: 'web' }),
     );
     return Response.json(result, { status: 201 });
   } catch (e) {

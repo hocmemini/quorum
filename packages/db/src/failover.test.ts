@@ -134,4 +134,18 @@ describe('createFailoverDb chaos (WP-9)', () => {
       await db.close();
     }
   });
+
+  it('honors a per-call (request-scoped) downRegions override', async () => {
+    const db = createFailoverDb([
+      { region: 'us-east-1', host: 'primary.invalid' },
+      { region: 'us-east-2', host: 'secondary.invalid' },
+    ]);
+    try {
+      const served = await db.run(async () => 'ok', { downRegions: ['us-east-1'] });
+      expect(served).toBe('ok');
+      expect(db.current()).toBe('us-east-2');
+    } finally {
+      await db.close();
+    }
+  });
 });
