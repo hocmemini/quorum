@@ -203,3 +203,21 @@ fmt and validate clean; `private:true` on all 6 packages; DEC-001..012 sequentia
 gate PASS (install, check, typecheck, 27 tests, build from scratch). Result PASS, with 2 minor
 review items (the word "additionally" in the provided WP-12 text; `.env.example` placeholder
 reconciliation at WP-6/7). cspell substituted for typos (no npm package).
+
+## 2026-06-08: Go-live + live E2E pass
+
+Stood up the full persistent stack (free-tier, scale-to-zero): infra/bootstrap (tfstate bucket,
+account S3 Block Public Access, SNS topic + email subscription, $20 budget with 50/80/100%
+notifications, billing alarm), infra/app (two peered DSQL clusters in us-east-1 + us-east-2, witness
+us-west-2, the quorum-vercel IAM user), then migrate (0001-0004) + seed (8 services, 12 signals, one
+demo incident), then infra/monitor + infra/ingest Lambdas with the alarm-state-change EventBridge
+rule. The operator principal was granted dsql connect on the app clusters out-of-band (an inline IAM
+policy, not committed).
+
+Live E2E: 48 tests (44 unit + 4 live integration: dedupe, concurrent OCC, projection, ingestion
+smoke). Benchmark (DEC-015 baseline): warm cross-region write p50=82 ms / p99=90 ms after a 617 ms
+one-time cold connect; failover ~57 ms to a warm survivor, ~595 ms to a cold survivor. Confirms the
+spike's ~754 ms was cold-connection cost, not a DSQL limit. Fixed a golive.sh bug (the functions
+stage was not passing the monitor's endpoint vars). Wiped the test data (batched DELETE) and
+re-seeded a clean demo. Spend to date: $0 (budget actual 0.00 / 20.00); the promotional-credit
+balance is console-only and was not consumed.
