@@ -1,0 +1,19 @@
+# Vercel uploads the repo root (rootDirectory=apps/web); keep the upload to source only.
+# Vercel runs pnpm install itself, so node_modules and build output are not needed, and infra
+# state / provider binaries must never be uploaded.
+node_modules
+**/node_modules
+.git
+.next
+**/.next
+.vercel
+.turbo
+.terraform
+**/.terraform
+*.tfstate
+*.tfstate.*
+**/*.tfstate
+**/*.tfstate.*
+infra/**
+docs/private/**
+*.log
