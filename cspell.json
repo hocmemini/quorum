@@ -98,7 +98,8 @@
     "triggerable",
     "alives",
     "userguide",
-    "unindexed"
+    "unindexed",
+    "workstream"
   ],
   "ignorePaths": [
     "node_modules/**",
