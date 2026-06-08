@@ -125,3 +125,87 @@ export async function latestMonitorSnapshot(db: Kysely<Database>): Promise<Monit
     .executeTakeFirst();
   return row?.snapshot ?? null;
 }
+
+export interface IncidentContext {
+  signal: { name: string; source: string | null; severity: string | null } | null;
+  service: { name: string; tier: string | null } | null;
+}
+
+/** The opening signal and affected service for an incident (DEC-017 relationship legibility). */
+export async function incidentContext(
+  db: Kysely<Database>,
+  incidentId: string,
+): Promise<IncidentContext> {
+  const inc = await db
+    .selectFrom('incident')
+    .select('signal_id')
+    .where('incident_id', '=', incidentId)
+    .executeTakeFirst();
+  if (!inc?.signal_id) return { signal: null, service: null };
+  const sig = await db
+    .selectFrom('signal')
+    .select(['name', 'source', 'severity', 'service_id'])
+    .where('signal_id', '=', inc.signal_id)
+    .executeTakeFirst();
+  if (!sig) return { signal: null, service: null };
+  const svc = await db
+    .selectFrom('service')
+    .select(['name', 'tier'])
+    .where('service_id', '=', sig.service_id)
+    .executeTakeFirst();
+  return {
+    signal: { name: sig.name, source: sig.source, severity: sig.severity },
+    service: svc ? { name: svc.name, tier: svc.tier } : null,
+  };
+}
+
+export interface TimelineEvent {
+  eventId: string;
+  type: string;
+  actor: string | null;
+  at: Date;
+  summary: string;
+}
+
+function summarize(type: string, payload: Record<string, unknown>): string {
+  const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+  switch (type) {
+    case 'incident.opened':
+      return `opened (${str(payload.severity) || 'sev?'})`;
+    case 'note.added':
+      return str(payload.body);
+    case 'action.created':
+      return `action: ${str(payload.title)}`;
+    case 'action.assigned':
+      return `assigned to ${str(payload.assignee)}`;
+    case 'status.changed':
+      return `status changed to ${str(payload.status)}`;
+    case 'severity.changed':
+      return `severity changed to ${str(payload.severity)}`;
+    case 'incident.resolved':
+      return 'resolved';
+    default:
+      return type;
+  }
+}
+
+/** Full append-only event timeline for an incident (DEC-017). READ path. */
+export async function incidentTimeline(
+  db: Kysely<Database>,
+  incidentId: string,
+): Promise<TimelineEvent[]> {
+  const rows = await db
+    .selectFrom('incident_event')
+    .select(['event_id', 'type', 'payload', 'actor', 'created_at'])
+    .where('incident_id', '=', incidentId)
+    .orderBy('created_at', 'asc')
+    .orderBy('event_id', 'asc')
+    .execute();
+  return rows.map((r) => ({
+    eventId: r.event_id,
+    type: r.type,
+    actor: r.actor,
+    at: r.created_at as Date,
+    summary: summarize(r.type, r.payload),
+  }));
+}

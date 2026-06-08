@@ -76,12 +76,21 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   const region = 'us-east-1';
   const id = (s: string) => deterministicId(`ws:${orgId}:${s}`);
   const ctx = (actor: string, evt: string) => ({ originRegion: region, actor, eventId: id(evt) });
+  const sig = (
+    await db.selectFrom('signal').select('signal_id').orderBy('signal_id').limit(3).execute()
+  ).map((r) => r.signal_id);
 
   // i1: 5xx spike, escalated to sev1, then resolved.
   const i1 = id('i1');
   await openIncident(
     db,
-    { incidentId: i1, orgId, title: 'API gateway 5xx spike', severity: 'sev2' },
+    {
+      incidentId: i1,
+      orgId,
+      signalId: sig[0] ?? null,
+      title: 'API gateway 5xx spike',
+      severity: 'sev2',
+    },
     ctx('cloudwatch', 'i1:open'),
   );
   await addNote(
@@ -132,7 +141,13 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   const i2 = id('i2');
   await openIncident(
     db,
-    { incidentId: i2, orgId, title: 'Auth token validation failures', severity: 'sev1' },
+    {
+      incidentId: i2,
+      orgId,
+      signalId: sig[1] ?? null,
+      title: 'Auth token validation failures',
+      severity: 'sev1',
+    },
     ctx('cloudwatch', 'i2:open'),
   );
   await addNote(
@@ -166,7 +181,13 @@ export async function seedWorkspace(db: Kysely<Database>, orgId: string): Promis
   const i3 = id('i3');
   await openIncident(
     db,
-    { incidentId: i3, orgId, title: 'Payment webhook backlog', severity: 'sev3' },
+    {
+      incidentId: i3,
+      orgId,
+      signalId: sig[2] ?? null,
+      title: 'Payment webhook backlog',
+      severity: 'sev3',
+    },
     ctx('cloudwatch', 'i3:open'),
   );
   await addNote(

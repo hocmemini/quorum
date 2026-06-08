@@ -1,19 +1,16 @@
 import {
-  type ActivityItem,
   getWorkspace,
   type IncidentSummary,
+  latestMonitorSnapshot,
   listIncidents,
-  recentActivity,
-  workspaceMetrics,
 } from '@quorum/api';
+import type { MonitorSnapshot } from '@quorum/db';
 import Link from 'next/link';
-import { ActivityFeed } from '@/components/ActivityFeed';
 import { AutoRefresh } from '@/components/AutoRefresh';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
-import { type Metric, MetricsPanel } from '@/components/MetricsPanel';
+import { ControlPlanePanel } from '@/components/ControlPlanePanel';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
 import { Onboarding } from '@/components/Onboarding';
-import { SystemStatus } from '@/components/SystemStatus';
 import { WorkspaceBar } from '@/components/WorkspaceBar';
 import { activeOrgId, chaosState, query, regionHealth } from '@/lib/db';
 
@@ -38,23 +35,19 @@ export default async function Home() {
   const chaos = await chaosState();
   const health = await regionHealth();
 
-  // Reads can fail if every serving region is down; degrade gracefully rather than crash.
   let ws: { orgId: string; name: string; joinCode: string } | null = null;
   let incidents: IncidentSummary[] = [];
-  let metrics = { events: 0, services: 0, signals: 0 };
-  let activity: ActivityItem[] = [];
+  let snapshot: MonitorSnapshot | null = null;
   let dbError = false;
   try {
     ws = await query((db) => getWorkspace(db, orgId));
     if (ws) {
       incidents = await query((k) => listIncidents(k, { limit: 50, orgId }));
-      metrics = await query((k) => workspaceMetrics(k, orgId));
-      activity = await query((k) => recentActivity(k, orgId, 8));
+      snapshot = await query((k) => latestMonitorSnapshot(k));
     }
   } catch {
     dbError = true;
   }
-  // Workspace genuinely absent (stale cookie) while the DB is reachable: onboard.
   if (!dbError && !ws) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
@@ -64,26 +57,9 @@ export default async function Home() {
   }
 
   const unavailable = chaos.allDown || dbError;
-  const openCount = incidents.filter((i) => i.status !== 'resolved').length;
-  const resolvedCount = incidents.filter((i) => i.status === 'resolved').length;
-  const sev1Count = incidents.filter(
-    (i) => i.severity === 'sev1' && i.status !== 'resolved',
-  ).length;
-  const healthy = health.filter((h) => h.up).length;
-  const metricCards: Metric[] = [
-    { label: 'Open incidents', value: openCount, tone: openCount > 0 ? 'accent' : 'fg' },
-    { label: 'Sev1 active', value: sev1Count, tone: sev1Count > 0 ? 'sev1' : 'fg' },
-    { label: 'Resolved', value: resolvedCount, tone: 'ok' },
-    { label: 'Events logged', value: metrics.events, tone: 'fg' },
-    { label: 'Services monitored', value: metrics.services, tone: 'fg' },
-    { label: 'Signals', value: metrics.signals, tone: 'fg' },
-    {
-      label: 'Regions serving',
-      value: `${healthy}/${health.length}`,
-      tone: healthy === health.length ? 'ok' : 'sev1',
-    },
-    { label: 'Write p50', value: '~89 ms', tone: 'fg' },
-  ];
+  const open = incidents.filter((i) => i.status !== 'resolved').length;
+  const sev1 = incidents.filter((i) => i.severity === 'sev1' && i.status !== 'resolved').length;
+  const resolved = incidents.filter((i) => i.status === 'resolved').length;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
@@ -98,14 +74,15 @@ export default async function Home() {
         {ws ? <WorkspaceBar name={ws.name} joinCode={ws.joinCode} /> : null}
       </header>
 
-      <SystemStatus
-        health={health}
+      <ControlPlanePanel
+        snapshot={snapshot}
         serving={chaos.serving}
         degraded={chaos.degraded}
         allDown={chaos.allDown}
         witness={chaos.witness}
-        regions={chaos.regions}
         down={chaos.down}
+        regions={chaos.regions}
+        health={health}
       />
 
       {unavailable ? (
@@ -114,17 +91,24 @@ export default async function Home() {
           <p className="mt-1 text-sm text-muted">
             Both serving regions are marked down. Your data is safe, the {chaos.witness} witness
             holds a durable quorum copy, but no region can serve reads until one recovers. Restore a
-            region in the panel above to continue. In production this state requires two
-            simultaneous regional outages.
+            region in the control plane above. In production this requires two simultaneous regional
+            outages.
           </p>
         </section>
       ) : (
         <>
-          <MetricsPanel metrics={metricCards} />
           <NewIncidentForm />
           <section className="mt-6 overflow-hidden rounded-lg border border-line">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-4 py-2">
+              <h2 className="text-sm font-semibold">Incidents</h2>
+              <span className="font-mono text-xs text-muted">
+                {open} open · {sev1} sev1 active · {resolved} resolved
+              </span>
+            </div>
             {incidents.length === 0 ? (
-              <p className="p-6 text-sm text-muted">No incidents yet. Open one above.</p>
+              <p className="p-6 text-sm text-muted">
+                No incidents yet. Open one above, or a signal can open one.
+              </p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
@@ -132,7 +116,7 @@ export default async function Home() {
                     <th className="px-4 py-2 font-medium">Incident</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                     <th className="px-4 py-2 font-medium">Severity</th>
-                    <th className="px-4 py-2 font-medium">Region</th>
+                    <th className="px-4 py-2 font-medium">Origin</th>
                     <th className="px-4 py-2 font-medium">Opened</th>
                   </tr>
                 </thead>
@@ -165,8 +149,11 @@ export default async function Home() {
                 </tbody>
               </table>
             )}
+            <p className="border-t border-line px-4 py-2 text-[11px] text-muted">
+              A <span className="text-fg">signal</span> is an ingested monitoring event (such as a
+              CloudWatch alarm) that can open or update an incident.
+            </p>
           </section>
-          <ActivityFeed items={activity} />
         </>
       )}
     </main>
