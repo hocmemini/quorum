@@ -55,15 +55,24 @@ export const handler = async (event: AlarmEvent): Promise<{ ok: boolean; inciden
     region: requiredEnv('DSQL_REGION'),
   });
   try {
+    // Link the alarm to a catalog signal by source so the opening signal + service are populated
+    // rather than "manually opened / unspecified" (DEC-018).
+    const sig = await db
+      .selectFrom('signal')
+      .select(['signal_id', 'name', 'severity'])
+      .where('source', '=', event.detail?.alarmName ?? '')
+      .limit(1)
+      .executeTakeFirst();
     await createIncident(db, {
       incidentId: parsed.incidentId,
       eventId: parsed.eventId,
-      title: parsed.title,
-      severity: parsed.severity,
+      title: sig?.name ?? parsed.title,
+      severity: sig?.severity ?? parsed.severity,
       originRegion: parsed.originRegion,
       actor: 'cloudwatch',
       // route scripted-alarm ingestion to the shared demo/alarms workspace (DEC-016)
       orgId: process.env.ALARM_ORG_ID ?? 'demo',
+      ...(sig ? { signalId: sig.signal_id } : {}),
     });
     return { ok: true, incidentId: parsed.incidentId };
   } finally {

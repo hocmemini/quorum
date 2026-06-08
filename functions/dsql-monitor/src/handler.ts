@@ -5,6 +5,7 @@ import {
   type MetricDatum,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch';
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import type { MonitorSnapshot } from '@quorum/db';
 import {
@@ -154,6 +155,29 @@ export const handler = async (): Promise<MonitorResult> => {
         .query("DELETE FROM monitor_status WHERE created_at < now() - interval '2 hours'")
         .catch(() => undefined);
     });
+
+    // Auto-create a demo incident through the real alarm-ingestion path (DEC-018): invoke the
+    // ingest Lambda with a fixed synthetic CloudWatch alarm, idempotent across runs.
+    try {
+      await new LambdaClient({}).send(
+        new InvokeCommand({
+          FunctionName: process.env.INGEST_FUNCTION_NAME ?? 'quorum-ingest',
+          InvocationType: 'Event',
+          Payload: Buffer.from(
+            JSON.stringify({
+              source: 'aws.cloudwatch',
+              region: 'us-east-1',
+              detail: {
+                alarmName: 'apigw-5xx',
+                state: { value: 'ALARM', timestamp: '2026-06-08T00:00:00Z' },
+              },
+            }),
+          ),
+        }),
+      );
+    } catch {
+      // best-effort; the dashboard does not depend on it
+    }
   } finally {
     await client.end();
   }
