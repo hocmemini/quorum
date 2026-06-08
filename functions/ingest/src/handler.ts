@@ -1,6 +1,5 @@
-import { createHash } from 'node:crypto';
 import { createIncident } from '@quorum/api';
-import { createDb, type Database } from '@quorum/db';
+import { createDb, type Database, deterministicId } from '@quorum/db';
 
 // EventBridge "CloudWatch Alarm State Change" event (only the fields we use).
 interface AlarmEvent {
@@ -20,14 +19,6 @@ export interface ParsedAlarm {
   originRegion: string;
 }
 
-/** Deterministic uuid-shaped id from a seed (sha256). A stable id is the idempotency key. */
-function idFrom(seed: string): string {
-  const h = createHash('sha256').update(seed).digest('hex');
-  return [h.slice(0, 8), h.slice(8, 12), h.slice(12, 16), h.slice(16, 20), h.slice(20, 32)].join(
-    '-',
-  );
-}
-
 /**
  * Pure: map a CloudWatch alarm transition INTO the ALARM state to an idempotent incident.
  * Returns null for events we do not act on (non-cloudwatch source, or not entering ALARM).
@@ -41,8 +32,8 @@ export function parseAlarmEvent(event: AlarmEvent): ParsedAlarm | null {
   const alarmName = detail.alarmName;
   const stamp = detail.state?.timestamp ?? '';
   return {
-    incidentId: idFrom(`incident:${alarmName}`),
-    eventId: idFrom(`event:${alarmName}:${stamp}`),
+    incidentId: deterministicId(`incident:${alarmName}`),
+    eventId: deterministicId(`event:${alarmName}:${stamp}`),
     title: `Alarm: ${alarmName}`,
     severity: 'sev2',
     originRegion: event.region ?? 'us-east-1',
