@@ -12,6 +12,15 @@ persuasion docs, read this end to end: several headline pieces are new to you.
 2. A **live DSQL monitor** that doubles as an observability layer (Section 6).
 3. A **polished, v0-ready** front end (Section 5) and the finding that **v0 is optional** (Section 9).
 4. A **Claude-skill operations control plane** to run everything (Section 8).
+5. **LIVE on Vercel** at `https://quorum-h0.vercel.app`, on the real multi-region DSQL stack.
+6. A **system-status / resilience panel** on the war room: live per-region health + latency, the
+   actually-observed serving region, and the chaos toggles, all on one judge-facing screen.
+7. **Workspace tenancy + collaboration (DEC-016):** name-your-workspace onboarding, join-by-link or
+   code, an always-available `/demo`, and 2.5 s near-real-time polling so a second screen updates
+   itself.
+8. **Vercel OIDC auth, no static AWS key:** the runtime assumes an IAM role via web identity, so the
+   one long-lived secret is gone. Measured warm: write p50 ~89 ms, failover ~57 ms warm / ~553 ms
+   cold.
 
 ---
 

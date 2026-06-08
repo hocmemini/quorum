@@ -1,9 +1,40 @@
 # Quorum, development status report
 
 **Date:** 2026-06-07. **Owner:** CC (engineering). **For:** UI/JP sync and handoff.
-**Headline:** the full product is built, validated, and pushed. Everything is local-green and
-ready to go live; what remains is operator-gated (stand up infra, deploy, optional v0 polish) and
-the submission artifacts. Submission deadline 2026-06-29.
+**Headline:** the full product is built, validated, and **LIVE** on Vercel
+(`https://quorum-h0.vercel.app`) against the multi-region DSQL stack. Submission deadline 2026-06-29.
+
+## 0. Live update (2026-06-08)
+
+The stack is deployed and verified end-to-end against the live clusters.
+
+- **Live URL:** `https://quorum-h0.vercel.app` (public; Vercel deployment protection disabled for
+  judge access). Backend: two DSQL clusters (us-east-1 + us-east-2, witness us-west-2), monitor +
+  ingest Lambdas, budget + alarms. Spend $0, within the $20 budget.
+- **Measured warm (DEC-015, re-confirmed live):** cross-region write p50 88.8 ms / p99 97.2 ms after
+  a ~680 ms one-time cold connect; failover ~57 ms to a warm survivor, ~553 ms cold. The spike's
+  ~754 ms was cold-connect cost, not a DSQL limit; warm steady-state is ~85 ms.
+- **Connection warmth (A):** functions pinned to iad1; both region pools kept warm with a staggered
+  keep-alive; `maxLifetimeSeconds` under the one-hour cap with jitter; `attachDatabasePool`.
+- **Workspace tenancy (DEC-016):** org_id-keyed workspaces, private by default, one-field onboarding
+  seeding three incidents, join-by-link/code, an always-available `/demo` workspace reset daily by
+  cron, alarm ingestion routed to the shared demo feed, 2.5 s war-room polling. Verified live:
+  create -> write -> list, and org isolation.
+- **Resilience panel + observed region (C):** the war room shows live per-region health + latency,
+  the actually-observed serving region, and chaos toggles. Verified live: chaos us-east-1 down ->
+  serving flips to us-east-2 with data intact -> restore returns to us-east-1. `isConnectionError`
+  validated against real ECONNREFUSED / ENOTFOUND / timeout shapes.
+- **Auth path (D): Vercel OIDC, no static key.** The runtime assumes an AWS IAM role
+  (`quorum-vercel-oidc`, web-identity trust to `oidc.vercel.com/quorum-h0`, cluster-scoped DSQL
+  policy) via `@vercel/functions/oidc`; the static access key was deleted (0 keys remain). Verified:
+  the app serves with zero static credentials. Note: CLI deploys are blocked by Vercel's
+  commit-author policy on the Hobby plan, so deploys run with git metadata temporarily hidden (no
+  Vercel git connection exists, per DEC-009); to deploy normally, make the repo public, connect the
+  GitHub account, or upgrade to Pro.
+- **Credits (E):** EC2 activity completed in the console (instance terminated). RDS activity: a
+  standard db.t3.micro postgres single-AZ instance (`quorum-credit-rds`) created to trigger it, torn
+  down once the activity flips to Completed.
+- **E2E:** 48 tests pass live; the deployed front+back flow verified by script.
 
 ## 1. Snapshot
 

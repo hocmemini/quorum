@@ -99,7 +99,9 @@
     "alives",
     "userguide",
     "unindexed",
-    "workstream"
+    "workstream",
+    "ECONNREFUSED",
+    "ENOTFOUND"
   ],
   "ignorePaths": [
     "node_modules/**",
