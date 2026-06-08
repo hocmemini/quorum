@@ -101,7 +101,8 @@
     "unindexed",
     "workstream",
     "ECONNREFUSED",
-    "ENOTFOUND"
+    "ENOTFOUND",
+    "unclearly"
   ],
   "ignorePaths": [
     "node_modules/**",
