@@ -49,6 +49,11 @@ data "aws_iam_policy_document" "monitor" {
       values   = ["Quorum/DSQLMonitor"]
     }
   }
+  statement {
+    sid       = "ReadBudget"
+    actions   = ["budgets:ViewBudget"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "monitor" {
