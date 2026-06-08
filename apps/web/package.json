@@ -11,6 +11,7 @@
   "dependencies": {
     "@quorum/api": "workspace:*",
     "@quorum/db": "workspace:*",
+    "@vercel/functions": "^3.6.2",
     "clsx": "^2.1.1",
     "next": "^15.5.0",
     "react": "^19.1.0",

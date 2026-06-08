@@ -1,4 +1,5 @@
 import type { Kysely } from 'kysely';
+import type { Pool } from 'pg';
 import { createDb, type DsqlConfig } from './client';
 import { isConnectionError } from './occ';
 import type { Database } from './schema';
@@ -13,25 +14,27 @@ export type AppDb = Kysely<Database>;
 
 export interface FailoverDb {
   /**
-   * Run an operation against the current region; on a connection error, fail over and retry.
-   * `opts.downRegions` adds request-scoped partitioned regions (the judge-facing chaos demo),
-   * merged with any configured ones.
+   * Run an operation, preferring the primary region and failing over to the survivor on a
+   * connection error. `opts.downRegions` adds request-scoped partitioned regions (the judge-facing
+   * chaos demo), merged with any configured ones.
    */
   run<T>(
     fn: (db: Kysely<Database>) => Promise<T>,
     opts?: { downRegions?: Iterable<string> },
   ): Promise<T>;
-  /** Region that served the last successful operation (or the configured primary). */
+  /** The region whose live connection actually served the last operation (observed, not assumed). */
   current(): string;
   regions(): string[];
+  /** The underlying per-region pools (for Vercel attachDatabasePool / draining on suspend). */
+  pools(): Pool[];
   close(): Promise<void>;
 }
 
 /**
  * Try `attempts` in rotation starting at `startIndex`; return the first success and report its
- * index via `onSuccess` (so the caller can stick to the region that worked). A connection error
- * advances to the next region; any other error (validation, OCC-exhausted) is thrown immediately.
- * Pure and Kysely-free, so the failover policy is unit-testable on its own.
+ * index via `onSuccess`. A connection error advances to the next region; any other error
+ * (validation, OCC-exhausted) is thrown immediately. Pure and Kysely-free, so the failover policy
+ * is unit-testable on its own.
  */
 export async function runWithFailover<T>(
   attempts: ReadonlyArray<() => Promise<T>>,
@@ -68,26 +71,54 @@ export function chaosDownRegions(env: NodeJS.ProcessEnv = process.env): string[]
 }
 
 /**
- * Region-aware Kysely over a peered DSQL pair (DEC-006: carries the WP-0 failover forward). One
- * pool per region; `run()` prefers the last-good region and sticks to whichever region serves the
- * request, so a regional outage transparently moves work to the survivor. Retrying `fn` on the
- * failover region is safe because writes are idempotent on the event/anchor id (DEC-005) and reads
- * are side-effect free.
+ * Region-aware Kysely over a peered DSQL pair (DEC-006). One pool per region. `run()` always tries
+ * the primary first and fails over to the survivor on a connection error, so the moment a chaos
+ * partition is cleared, work automatically returns to the primary (clean restore / fail-back).
+ * `current()` reports the region whose connection actually served the last call, so the UI shows
+ * the observed serving region, not an assumption. Retrying `fn` on the survivor is safe because
+ * writes are idempotent on the event/anchor id (DEC-005).
  *
- * `options.downRegions` (default: QUORUM_CHAOS_DOWN_REGIONS) marks regions as partitioned, so the
- * live demo can force a failover without touching the database (WP-9 chaos).
+ * Connection warmth (DEC-015): each pool gets a randomized `maxLifetimeSeconds` under the DSQL
+ * one-hour session cap (staggered recycles) and a bounded connect timeout; `options.keepAliveMs`
+ * runs a staggered `SELECT 1` on every region pool so a judge-triggered failover lands on a warm
+ * socket (~57 ms) instead of a cold connect (~595 ms). `options.downRegions` (default
+ * QUORUM_CHAOS_DOWN_REGIONS) marks regions partitioned so the demo can force a failover.
  */
 export function createFailoverDb(
   endpoints: ReadonlyArray<RegionEndpoint>,
   config: Partial<Omit<DsqlConfig, 'host' | 'region'>> = {},
-  options: { downRegions?: Iterable<string> } = {},
+  options: { downRegions?: Iterable<string>; keepAliveMs?: number } = {},
 ): FailoverDb {
   if (endpoints.length === 0) throw new Error('createFailoverDb: at least one endpoint required');
-  const states = endpoints.map((ep) =>
-    createDb<Database>({ host: ep.host, region: ep.region, ...config }),
-  );
+  const states = endpoints.map((ep) => {
+    const jitter = Math.floor(Math.random() * 300);
+    return createDb<Database>({
+      host: ep.host,
+      region: ep.region,
+      ...config,
+      pool: { maxLifetimeSeconds: 2700 + jitter, connectionTimeoutMillis: 3000, ...config.pool },
+    });
+  });
   const down = new Set(options.downRegions ?? chaosDownRegions());
-  let current = 0;
+  let lastServed = endpoints[0]?.region ?? '';
+
+  const timers: ReturnType<typeof setInterval>[] = [];
+  const keepAliveMs = options.keepAliveMs ?? 0;
+  if (keepAliveMs > 0) {
+    states.forEach((s, i) => {
+      const ping = () => {
+        s.pool.query('SELECT 1').catch(() => undefined);
+      };
+      const startTimer = setTimeout(
+        ping,
+        Math.floor((keepAliveMs / Math.max(states.length, 1)) * i),
+      );
+      const interval = setInterval(ping, keepAliveMs);
+      startTimer.unref?.();
+      interval.unref?.();
+      timers.push(interval);
+    });
+  }
 
   return {
     run<T>(
@@ -106,17 +137,21 @@ export function createFailoverDb(
         }
         return fn(s.db);
       });
-      return runWithFailover(attempts, current, (idx) => {
-        current = idx;
+      return runWithFailover(attempts, 0, (idx) => {
+        lastServed = endpoints[idx]?.region ?? lastServed;
       });
     },
     current(): string {
-      return endpoints[current]?.region ?? endpoints[0]?.region ?? '';
+      return lastServed;
     },
     regions(): string[] {
       return endpoints.map((e) => e.region);
     },
+    pools(): Pool[] {
+      return states.map((s) => s.pool);
+    },
     async close(): Promise<void> {
+      for (const t of timers) clearInterval(t);
       await Promise.all(states.map((s) => s.pool.end()));
     },
   };
