@@ -49,8 +49,14 @@ The stack is deployed and verified end-to-end against the live clusters.
   50 concurrent" reports all committed, zero conflicts, and the latency spread. A live mini
   architecture diagram (two regions + witness) reacts to failover, a Try-this strip signposts it,
   and re-acknowledging an already-acknowledged incident appends no event. The demo carries a real
-  alarm-opened incident (CloudWatch alarm -> ingest Lambda -> DSQL) with a populated opening signal,
-  refreshed by the monitor.
+  alarm-opened incident with a populated opening signal.
+- **Seed all landing spots + provenance + cost (DEC-019):** every workspace (created from the splash
+  or /demo) is seeded at creation with the same realistic, signal-linked incidents including an
+  alarm-shaped one (populated opening signal apigw-5xx + named affected service), so no judge lands
+  empty and all entry points present identically; the monitor no longer injects the demo alarm
+  incident (the shared seed does). Run-a-write and the burst each own a co-located result block (no
+  floating shared number). The cost line drops the internal budget denominator and reads "running
+  ~$X/mo, scales to zero when idle".
 
 ## 1. Snapshot
 

@@ -30,8 +30,14 @@ persuasion docs, read this end to end: several headline pieces are new to you.
 10. **Interactive proof + demo integrity (DEC-018):** the headline DSQL numbers are judge-triggered
     and measured per click (run-a-write reports real commit / cross-region / read-back latency; a
     50-write concurrent burst reports all-committed / zero-conflicts / spread), a live mini
-    architecture diagram reacts to failover, and the demo carries a real alarm-opened incident
-    (CloudWatch alarm -> ingest Lambda -> DSQL) with a populated opening signal.
+    architecture diagram reacts to failover, and every workspace carries an alarm-shaped incident
+    with a populated opening signal.
+11. **Seed all landing spots, metric provenance, cost (DEC-019):** every workspace (created or
+    /demo) is seeded at creation with the same signal-linked incidents including an alarm-shaped one
+    (populated opening signal + affected service), so no judge lands empty; the monitor no longer
+    injects the demo alarm incident (the shared seed does). Run-a-write and the burst each own a
+    co-located result block, and the cost line shows the running cost with scale-to-zero context
+    (no budget denominator).
 
 ---
 
