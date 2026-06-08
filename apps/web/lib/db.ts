@@ -1,5 +1,6 @@
 import { type AppDb, createFailoverDb, endpointsFromEnv, type FailoverDb } from '@quorum/db';
 import { attachDatabasePool } from '@vercel/functions';
+import { awsCredentialsProvider } from '@vercel/functions/oidc';
 import { cookies } from 'next/headers';
 
 const CHAOS_COOKIE = 'quorum_chaos_down';
@@ -16,7 +17,9 @@ let cached: FailoverDb | undefined;
  */
 export function getDb(): FailoverDb {
   if (!cached) {
-    cached = createFailoverDb(endpointsFromEnv(), {}, { keepAliveMs: 30_000 });
+    const roleArn = process.env.AWS_ROLE_ARN;
+    const config = roleArn ? { credentials: awsCredentialsProvider({ roleArn }) } : {};
+    cached = createFailoverDb(endpointsFromEnv(), config, { keepAliveMs: 30_000 });
     if (process.env.VERCEL) {
       for (const pool of cached.pools()) attachDatabasePool(pool);
     }

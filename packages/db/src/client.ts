@@ -26,6 +26,8 @@ export interface DsqlConfig {
   tokenExpiresInSeconds?: number;
   /** Extra pg pool options (max, idleTimeoutMillis, ...). */
   pool?: Omit<PoolConfig, 'host' | 'port' | 'user' | 'database' | 'password' | 'ssl'>;
+  /** AWS credentials provider for the token signer (e.g. Vercel OIDC); default chain otherwise. */
+  credentials?: NonNullable<ConstructorParameters<typeof DsqlSigner>[0]>['credentials'];
 }
 
 const DEFAULTS = {
@@ -62,7 +64,12 @@ export function createDsqlPool(config: DsqlConfig): Pool {
   const ttl = config.tokenTtlSeconds ?? DEFAULTS.tokenTtlSeconds;
   const expiresIn = config.tokenExpiresInSeconds ?? DEFAULTS.tokenExpiresInSeconds;
 
-  const signer = new DsqlSigner({ hostname: config.host, region: config.region, expiresIn });
+  const signer = new DsqlSigner({
+    hostname: config.host,
+    region: config.region,
+    expiresIn,
+    ...(config.credentials ? { credentials: config.credentials } : {}),
+  });
   const produce = (): Promise<string> =>
     user === 'admin' ? signer.getDbConnectAdminAuthToken() : signer.getDbConnectAuthToken();
   const password = createTokenProvider(produce, ttl);
