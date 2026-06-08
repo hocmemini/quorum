@@ -1,0 +1,6 @@
+aws_profile   = "h0"
+region        = "us-east-1"
+dsql_region   = "us-east-1"
+# From `terraform -chdir=infra/app output`:
+dsql_endpoint = "<cluster-id>.dsql.us-east-1.on.aws"
+cluster_arns  = ["<primary-cluster-arn>", "<secondary-cluster-arn>"]
