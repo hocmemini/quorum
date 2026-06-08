@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
+    "wipe": "tsx src/wipe.ts",
     "test": "vitest run"
   },
   "dependencies": {
