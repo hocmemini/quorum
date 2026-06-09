@@ -73,6 +73,17 @@ The stack is deployed and verified end-to-end against the live clusters.
   cross-region read-back is elevated as the read-your-writes-across-regions strong-consistency proof.
   All three use the real write path; nothing is simulated. Validated live: every race shows the 40001
   retry and both regions agree.
+- **Pre-warm, visual race, race-as-incident-log (DEC-022):** the war room pre-warms the exact
+  cross-region read-your-writes route on mount (a throwaway write-then-read cycle), so the first
+  run-a-write and first race land warm (~35/52 ms, no ~300 ms cold start). The split-brain race is a
+  two-region visual: each region shows its attempted value, the loser flashes a 40001 conflict, both
+  snap to the single agreed value with a no-fork check, and the mechanism detail is demoted to a
+  secondary line/tooltip. The race targets a dedicated demonstration incident (non-workspace org,
+  reset each race, kept out of the war-room list): two writers transactionally append a status change
+  and bump a version guard, the loser's transaction rolls back on the OCC conflict and reconciles, and
+  the incident's append-only timeline shows the single linearized committed history (opened, resolved
+  by us-east-1, acknowledged by us-east-2) read identical from both regions, the rolled-back loser
+  absent. Migration 0008 adds incident.version.
 
 ## 1. Snapshot
 

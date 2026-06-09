@@ -50,6 +50,14 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     loser, and both regions read back identical (proof_race, migration 0007). The burst reads both
     regions post-run to prove zero divergence, and the cross-region read-back is the read-your-writes
     strong-consistency proof. All real write path; nothing simulated.
+14. **Cross-region pre-warm, visual race, race-as-incident-log (DEC-022):** WarmUp runs the real
+    cross-region write-then-read cycle on mount so the first measured click is warm. The race targets
+    a dedicated demonstration incident (non-workspace org, reset each race, absent from any list):
+    version-guarded transactional appends (incident.version, migration 0008) make the OCC conflict
+    genuine, the loser's transaction rolls back and reconciles, and the incident's append-only timeline
+    shows the single linearized committed history read identical from both regions (the rolled-back
+    loser absent, which is the proof). RaceVisual renders the two-region animation with the mechanism
+    demoted. Supersedes the DEC-021 proof_race row.
 
 ---
 
