@@ -64,6 +64,15 @@ The stack is deployed and verified end-to-end against the live clusters.
   and the dsql-monitor pings the Vercel warm-up endpoint each run, so the first deliberate click lands
   warm with no disclaimer. Simulate outage measures the real failover to the survivor and shows
   "failed over to <region> in X ms", replacing the removed static failover constant.
+- **No-split-brain proof (DEC-021):** the panel makes strong-consistency-under-contention visible with
+  an adversarial proof. "Race two writers" launches two concurrent conditional-on-version transitions
+  on one dedicated row, one through each region pool (us-east-1 tries resolve, us-east-2 tries
+  acknowledge); DSQL's OCC serializes them to one value, the loser's 40001 OCC retry reconciles, and
+  both regions read back identical - two writers, one truth, no split-brain. The burst is reframed as a
+  divergence proof (both regions read the run's log back identical, zero divergence) and the
+  cross-region read-back is elevated as the read-your-writes-across-regions strong-consistency proof.
+  All three use the real write path; nothing is simulated. Validated live: every race shows the 40001
+  retry and both regions agree.
 
 ## 1. Snapshot
 

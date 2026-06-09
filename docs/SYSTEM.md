@@ -44,6 +44,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     dsql-monitor pings the Vercel warm-up endpoint each run so the first click lands warm. Simulate
     outage measures the real time to serve from the survivor and shows it live, replacing the removed
     static failover constant.
+13. **No-split-brain proof, strong consistency under contention (DEC-021):** a "Race two writers"
+    action launches two concurrent conditional-on-version transitions on one dedicated proof row across
+    both region pools; DSQL OCC resolves to a single value, the existing 40001 OCC retry reconciles the
+    loser, and both regions read back identical (proof_race, migration 0007). The burst reads both
+    regions post-run to prove zero divergence, and the cross-region read-back is the read-your-writes
+    strong-consistency proof. All real write path; nothing simulated.
 
 ---
 
