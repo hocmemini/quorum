@@ -102,7 +102,11 @@
     "workstream",
     "ECONNREFUSED",
     "ENOTFOUND",
-    "unclearly"
+    "unclearly",
+    "linearize",
+    "linearizes",
+    "linearized",
+    "linearizing"
   ],
   "ignorePaths": [
     "node_modules/**",
