@@ -84,6 +84,13 @@ The stack is deployed and verified end-to-end against the live clusters.
   the incident's append-only timeline shows the single linearized committed history (opened, resolved
   by us-east-1, acknowledged by us-east-2) read identical from both regions, the rolled-back loser
   absent. Migration 0008 adds incident.version.
+- **Chaos-state-aware proofs (DEC-023):** the chaos toggle now governs the proof actions, not just the
+  display. With a region failed for the session, no proof transacts with it or claims agreement from
+  it: run-a-write commits survivor-only ("committed to <survivor>, durable via the us-west-2 witness
+  quorum, X ms", no read from the down region), the burst runs survivor-only (dropping the both-regions
+  claim), the two-region race steps aside with a resume-on-restore note, and the read-your-writes tile
+  shows the survival state ("us-east-1 unreachable, serving from us-east-2"). On restore every proof
+  returns to full cross-region behavior; symmetric for either region. Validated live both directions.
 
 ## 1. Snapshot
 

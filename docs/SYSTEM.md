@@ -58,6 +58,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     shows the single linearized committed history read identical from both regions (the rolled-back
     loser absent, which is the proof). RaceVisual renders the two-region animation with the mechanism
     demoted. Supersedes the DEC-021 proof_race row.
+15. **Chaos-state-aware proofs (DEC-023):** survivorState() (lib/db) reads the session chaos cookie;
+    every proof endpoint (run-a-write, burst, race, warm) consults it. During a simulated outage the
+    proofs go survivor-only with witness-quorum framing (no call to, or claim about, the down region),
+    the race steps aside, and the read-your-writes tile shows the survival state; UI result rendering is
+    gated on the live chaos state so a stale result never shows in the wrong mode. On restore, full
+    cross-region behavior returns. Symmetric for either region down.
 
 ---
 
