@@ -55,8 +55,15 @@ The stack is deployed and verified end-to-end against the live clusters.
   alarm-shaped one (populated opening signal apigw-5xx + named affected service), so no judge lands
   empty and all entry points present identically; the monitor no longer injects the demo alarm
   incident (the shared seed does). Run-a-write and the burst each own a co-located result block (no
-  floating shared number). The cost line drops the internal budget denominator and reads "running
-  ~$X/mo, scales to zero when idle".
+  floating shared number). The cost line drops the internal budget denominator (DEC-020 makes it a
+  live DPU gauge).
+- **Live free-tier gauge, pre-warm, failover number (DEC-020):** the cost line is a live free-tier
+  gauge reading "$X this month, YK of 100K free DPU, scale-to-zero", where the DPU is real
+  month-to-date DSQL DPU consumed summed across clusters and both regions (via the cost-checker
+  through the DSQL snapshot) and ticks up with usage. War rooms pre-warm both region pools on mount
+  and the dsql-monitor pings the Vercel warm-up endpoint each run, so the first deliberate click lands
+  warm with no disclaimer. Simulate outage measures the real failover to the survivor and shows
+  "failed over to <region> in X ms", replacing the removed static failover constant.
 
 ## 1. Snapshot
 

@@ -38,6 +38,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     injects the demo alarm incident (the shared seed does). Run-a-write and the burst each own a
     co-located result block, and the cost line shows the running cost with scale-to-zero context
     (no budget denominator).
+12. **Live free-tier gauge, session pre-warm, failover number (DEC-020):** the cost line is a live
+    free-tier gauge (real month-to-date DSQL DPU vs 100K free plus spend, from the cost-checker via
+    the DSQL snapshot, ticking up with usage). War rooms pre-warm both region pools on mount and the
+    dsql-monitor pings the Vercel warm-up endpoint each run so the first click lands warm. Simulate
+    outage measures the real time to serve from the survivor and shows it live, replacing the removed
+    static failover constant.
 
 ---
 
