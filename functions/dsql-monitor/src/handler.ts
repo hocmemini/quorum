@@ -169,10 +169,7 @@ export const handler = async (): Promise<MonitorResult> => {
       writeP50Ms: warmP50,
       writeP99Ms: warmP99,
       consistency: { pass: results[0]?.pass ?? false, crossRegionMs: warmP50 },
-      failover: {
-        survivalPass: results[2]?.pass ?? false,
-        warmFailoverMs: Number(process.env.MONITOR_FAILOVER_MS ?? '57'),
-      },
+      failover: { survivalPass: results[2]?.pass ?? false },
       cost: await readCost(),
     };
 
