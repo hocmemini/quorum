@@ -1,5 +1,5 @@
 const STEPS = [
-  'Run a cross-region write (numbers are measured, not canned)',
+  'Race two writers at one row, or run a cross-region write - measured, not canned',
   'Simulate a us-east-1 outage with the buttons below',
   'Watch the control plane keep serving from us-east-2, then restore',
 ];

@@ -72,6 +72,15 @@ export interface MonitorStatusTable {
   created_at: Generated<Date>;
 }
 
+/** Single contended row for the no-split-brain conflict-race proof (DEC-021); not an incident. */
+export interface ProofRaceTable {
+  race_id: string;
+  version: number;
+  status: string;
+  region: string;
+  updated_at: Generated<Date>;
+}
+
 export interface Database {
   service: ServiceTable;
   signal: SignalTable;
@@ -79,6 +88,7 @@ export interface Database {
   incident_event: IncidentEventTable;
   workspace: WorkspaceTable;
   monitor_status: MonitorStatusTable;
+  proof_race: ProofRaceTable;
 }
 
 export type Service = Selectable<ServiceTable>;
