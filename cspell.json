@@ -106,7 +106,8 @@
     "linearize",
     "linearizes",
     "linearized",
-    "linearizing"
+    "linearizing",
+    "transactionally"
   ],
   "ignorePaths": [
     "node_modules/**",
