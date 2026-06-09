@@ -59,7 +59,19 @@ function RegionBox({
   );
 }
 
-export function RaceVisual({ result, busy }: { result: RaceResult | null; busy: boolean }) {
+export function RaceVisual({
+  result,
+  busy,
+  outage,
+  downRegion,
+  survivor,
+}: {
+  result: RaceResult | null;
+  busy: boolean;
+  outage: boolean;
+  downRegion: string;
+  survivor: string;
+}) {
   const [phase, setPhase] = useState<Phase>('idle');
 
   useEffect(() => {
@@ -75,6 +87,17 @@ export function RaceVisual({ result, busy }: { result: RaceResult | null; busy: 
       clearTimeout(t2);
     };
   }, [result]);
+
+  // Chaos-aware (DEC-023): the two-region race needs both regions, so it steps aside during a
+  // simulated outage with a positive resume-on-restore note rather than transact with a failed region.
+  if (outage) {
+    return (
+      <div className="mt-2 rounded-md border border-sev2/30 bg-sev2/5 p-2 font-mono text-xs text-muted">
+        {downRegion} is down for this session - cross-region proofs resume on restore. Serving from{' '}
+        {survivor}.
+      </div>
+    );
+  }
 
   if (!result) {
     return (

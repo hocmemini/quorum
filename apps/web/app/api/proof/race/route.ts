@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { withOccRetry } from '@quorum/db';
-import { getDb } from '@/lib/db';
+import { getDb, survivorState } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,6 +21,17 @@ export async function POST() {
   const rB = regions[1];
   if (!pA || !pB || !rA || !rB)
     return Response.json({ error: 'need two regions' }, { status: 503 });
+
+  // Chaos-aware (DEC-023): the two-region race needs both regions. If either is down for the session,
+  // step aside with a resume-on-restore note rather than transact with a failed region.
+  const { down, up } = await survivorState();
+  if (down.length > 0) {
+    return Response.json({
+      steppedAside: true,
+      downRegion: down[0] ?? null,
+      survivor: up[0] ?? null,
+    });
+  }
 
   // Reset: clear the timeline and re-open the demonstration incident at version 0.
   await pA.query('DELETE FROM incident_event WHERE incident_id = $1', [DEMO_ID]);

@@ -93,6 +93,9 @@ export function ControlPlanePanel({
       <ProofControls
         initWriteMs={snapshot?.writeP50Ms ?? null}
         initCrossMs={snapshot?.consistency?.crossRegionMs ?? null}
+        down={down}
+        serving={serving}
+        witness={witness}
       />
 
       <p className="mt-3 font-mono text-xs text-muted">

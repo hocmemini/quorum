@@ -1,47 +1,58 @@
 import { randomUUID } from 'node:crypto';
-import { cookies } from 'next/headers';
-import { CHAOS_COOKIE_NAME, getDb } from '@/lib/db';
+import { getDb, survivorState } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Judge-triggered proof (DEC-018): a real write in one region, confirmed by reading it back from
-// the other region through the failover pools. Numbers are measured per request and never cached,
-// so they jitter naturally. Honors the chaos cookie: if a region is marked down, write to the
-// survivor and confirm from the other.
+// Judge-triggered read-your-writes proof (DEC-018), now chaos-aware (DEC-023). Both regions up: write
+// in one region, read it back from the other. A region failed for the session: survivor-only commit,
+// durable via the us-west-2 witness quorum, with NO read from (or claim about) the down region.
 export async function POST() {
   const db = getDb();
   const pools = db.pools();
   const regions = db.regions();
-  if (regions.length < 2 || !pools[0] || !pools[1] || !regions[0] || !regions[1]) {
+  const rA = regions[0];
+  const rB = regions[1];
+  const pA = pools[0];
+  const pB = pools[1];
+  if (!rA || !rB || !pA || !pB)
     return Response.json({ error: 'need two regions' }, { status: 503 });
-  }
-  const down = new Set(
-    ((await cookies()).get(CHAOS_COOKIE_NAME)?.value ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean),
-  );
-  const writeIdx = down.has(regions[0]) ? 1 : 0;
-  const readIdx = writeIdx === 0 ? 1 : 0;
-  const writePool = pools[writeIdx];
-  const readPool = pools[readIdx];
-  if (!writePool || !readPool) return Response.json({ error: 'pool missing' }, { status: 503 });
+  const { up, witness } = await survivorState();
+  if (up.length === 0) return Response.json({ degraded: true });
 
+  const round = (n: number) => Math.round(n * 10) / 10;
   const eventId = randomUUID();
   const marker = randomUUID();
 
-  // 1. real write (event_id is the PK + idempotency key); measure the local commit.
+  // Survivor-only during a simulated outage: commit to the one region still up; the witness keeps the
+  // write durable in quorum. No transaction with the down region.
+  if (up.length < regions.length) {
+    const survivor = up[0];
+    if (!survivor) return Response.json({ degraded: true });
+    const pool = survivor === rA ? pA : pB;
+    const t = performance.now();
+    await pool.query(
+      'INSERT INTO spike_event (event_id, origin_region, seq, payload) VALUES ($1, $2, $3, $4::jsonb)',
+      [eventId, survivor, Date.now(), JSON.stringify({ proof: marker })],
+    );
+    return Response.json({
+      survivorOnly: true,
+      survivor,
+      witness,
+      commitMs: round(performance.now() - t),
+    });
+  }
+
+  // Both regions up: write in region A, read it back from region B.
   const t0 = performance.now();
-  await writePool.query(
+  await pA.query(
     'INSERT INTO spike_event (event_id, origin_region, seq, payload) VALUES ($1, $2, $3, $4::jsonb)',
-    [eventId, regions[writeIdx], Date.now(), JSON.stringify({ proof: marker })],
+    [eventId, rA, Date.now(), JSON.stringify({ proof: marker })],
   );
   const commitMs = performance.now() - t0;
 
-  // 2. read it back from the OTHER region; confirm identical; measure cross-region visibility.
   const tr = performance.now();
-  const r = await readPool.query<{ payload: { proof?: string } }>(
+  const r = await pB.query<{ payload: { proof?: string } }>(
     'SELECT payload FROM spike_event WHERE event_id = $1',
     [eventId],
   );
@@ -49,13 +60,12 @@ export async function POST() {
   const crossRegionMs = performance.now() - t0;
   const confirmed = r.rows[0]?.payload?.proof === marker;
 
-  const r1 = (n: number) => Math.round(n * 10) / 10;
   return Response.json({
-    commitMs: r1(commitMs),
-    crossRegionMs: r1(crossRegionMs),
-    readBackMs: r1(readBackMs),
+    commitMs: round(commitMs),
+    crossRegionMs: round(crossRegionMs),
+    readBackMs: round(readBackMs),
     confirmed,
-    wroteRegion: regions[writeIdx],
-    readRegion: regions[readIdx],
+    wroteRegion: rA,
+    readRegion: rB,
   });
 }

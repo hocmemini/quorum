@@ -35,6 +35,19 @@ async function cookieDownRegions(): Promise<string[]> {
     .filter(Boolean);
 }
 
+/**
+ * Session survivor state for the chaos-aware proof actions (DEC-023): the regions marked down for
+ * this session, the regions still up (survivors, in endpoint order), and the durability witness.
+ * Proof endpoints use this so they never transact with, or claim agreement from, a failed region.
+ */
+export async function survivorState(): Promise<{ down: string[]; up: string[]; witness: string }> {
+  const down = await cookieDownRegions();
+  const up = getDb()
+    .regions()
+    .filter((r) => !down.includes(r));
+  return { down, up, witness: process.env.DSQL_WITNESS_REGION ?? 'us-west-2' };
+}
+
 /** Run a DB op with request-scoped chaos applied (the failover demo cookie). Server-only. */
 export async function query<T>(fn: (db: AppDb) => Promise<T>): Promise<T> {
   return getDb().run(fn, { downRegions: await cookieDownRegions() });
