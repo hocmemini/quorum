@@ -185,6 +185,16 @@ export const handler = async (): Promise<MonitorResult> => {
         .query("DELETE FROM monitor_status WHERE created_at < now() - interval '2 hours'")
         .catch(() => undefined);
     });
+
+    // Keep a baseline Vercel instance + cluster warm (DEC-020): ping the warm-up endpoint so a
+    // cold deployment is warmed before the first judge interaction. Best-effort.
+    try {
+      await fetch(process.env.WARMUP_URL ?? 'https://quorum-h0.vercel.app/api/keepalive', {
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch {
+      // best-effort; the dashboard does not depend on it
+    }
   } finally {
     await client.end();
   }

@@ -11,6 +11,7 @@ import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { ControlPlanePanel } from '@/components/ControlPlanePanel';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
 import { Onboarding } from '@/components/Onboarding';
+import { WarmUp } from '@/components/WarmUp';
 import { WorkspaceBar } from '@/components/WorkspaceBar';
 import { activeOrgId, chaosState, query, regionHealth } from '@/lib/db';
 
@@ -64,6 +65,7 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
       <AutoRefresh intervalMs={2500} />
+      <WarmUp />
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
