@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { type RaceResult, RaceVisual } from '@/components/RaceVisual';
 import { cn } from '@/lib/utils';
 
 type WriteResult = {
@@ -22,17 +23,6 @@ type BurstResult = {
   minMs: number;
   p50Ms: number;
   maxMs: number;
-};
-
-type RaceResult = {
-  conflicted: boolean;
-  loserRegion: string;
-  retries: number;
-  finalStatus: string | null;
-  finalVersion: number | null;
-  agree: boolean;
-  regionA: string;
-  regionB: string;
 };
 
 type Kind = 'write' | 'burst' | 'race';
@@ -83,22 +73,7 @@ export function ProofControls({
             {busy === 'race' ? 'racing...' : 'Race two writers'}
           </button>
         </div>
-        <div
-          className={cn(
-            'mt-1.5 font-mono text-xs',
-            race && !race.agree ? 'text-sev1' : 'text-muted',
-          )}
-        >
-          {race
-            ? `${race.regionA} tried "resolved", ${race.regionB} tried "acknowledged" at once. ${
-                race.conflicted
-                  ? `${race.loserRegion} hit a serialization conflict (40001), retried ${race.retries}x, reconciled`
-                  : 'both serialized cleanly in order'
-              }. Settled to ${race.finalStatus} (v${race.finalVersion}); ${
-                race.agree ? 'both regions agree, no fork.' : 'FORK DETECTED'
-              }`
-            : "two regions attempt conflicting transitions on one item; DSQL's OCC picks one truth, the loser's 40001 retry reconciles, and both regions read it identical"}
-        </div>
+        <RaceVisual result={race} busy={busy === 'race'} />
       </div>
 
       {/* Read-your-writes across regions (strong consistency). */}

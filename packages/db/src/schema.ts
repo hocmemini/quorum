@@ -29,6 +29,7 @@ export interface IncidentTable {
   signal_id: string | null; // app-layer ref -> signal (null = manually opened)
   org_id: string | null; // workspace key (DEC-016); null = legacy / no workspace
   origin_region: string;
+  version: Generated<number | null>; // optimistic-lock counter; contended only by the DEC-022 race demo
   created_at: Generated<Date>;
 }
 

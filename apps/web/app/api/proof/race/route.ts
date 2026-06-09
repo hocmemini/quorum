@@ -1,17 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { withOccRetry } from '@quorum/db';
 import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Fixed UUID for the single contended proof row (DEC-021): a dedicated, ephemeral target reset on
-// every race, so the no-split-brain proof never pollutes the seeded incident list.
-const RACE_ID = '00000000-0000-4000-8000-000000000001';
+// Dedicated demonstration incident (DEC-022): a fixed id under a non-workspace org so it never shows
+// in any war-room list; reset on every race so repeated races stay clean. The race writes to its
+// real append-only timeline, not an abstract row.
+const DEMO_ID = '00000000-0000-4000-8000-0000000000d2';
+const DEMO_ORG = '__race_demo__';
 
-// Two writers, one truth. Launch two concurrent conflicting state transitions on the SAME row, one
-// through each region pool, each conditioned on the version it read. DSQL's OCC serializes them to a
-// single value; the loser's conditional UPDATE misses (or trips a real 40001) and the existing
-// withOccRetry path re-reads and reconciles. Both regions then read back identical: no split-brain.
 export async function POST() {
   const db = getDb();
   const pools = db.pools();
@@ -23,13 +22,22 @@ export async function POST() {
   if (!pA || !pB || !rA || !rB)
     return Response.json({ error: 'need two regions' }, { status: 503 });
 
-  // Reset the dedicated, ephemeral proof row (not an incident; not in any workspace list).
-  await pA.query('DELETE FROM proof_race WHERE race_id = $1', [RACE_ID]);
+  // Reset: clear the timeline and re-open the demonstration incident at version 0.
+  await pA.query('DELETE FROM incident_event WHERE incident_id = $1', [DEMO_ID]);
+  await pA.query('DELETE FROM incident WHERE incident_id = $1', [DEMO_ID]);
   await pA.query(
-    "INSERT INTO proof_race (race_id, version, status, region) VALUES ($1, 0, 'open', $2)",
-    [RACE_ID, rA],
+    'INSERT INTO incident (incident_id, signal_id, org_id, origin_region, version) VALUES ($1, NULL, $2, $3, 0)',
+    [DEMO_ID, DEMO_ORG, rA],
+  );
+  await pA.query(
+    "INSERT INTO incident_event (event_id, incident_id, type, payload, actor, origin_region) VALUES ($1, $2, 'incident.opened', $3::jsonb, 'system', $4)",
+    [randomUUID(), DEMO_ID, JSON.stringify({ title: 'Split-brain race demonstration' }), rA],
   );
 
+  // One version-guarded conditional transition, transactionally: append the status change AND bump the
+  // incident version in one transaction. On the OCC conflict the whole transaction rolls back (the
+  // loser's append is undone) and the existing withOccRetry path re-reads and reconciles. The
+  // rolled-back event never appears in the committed timeline.
   const transition = (
     pool: (typeof pools)[number],
     region: string,
@@ -38,20 +46,33 @@ export async function POST() {
   ): Promise<void> =>
     withOccRetry(
       async () => {
-        const cur = await pool.query('SELECT version FROM proof_race WHERE race_id = $1', [
-          RACE_ID,
-        ]);
-        const v = Number(cur.rows[0]?.version ?? 0);
-        const res = await pool.query(
-          'UPDATE proof_race SET version = $1, status = $2, region = $3, updated_at = now() WHERE race_id = $4 AND version = $5',
-          [v + 1, target, region, RACE_ID, v],
-        );
-        if ((res.rowCount ?? 0) === 0) {
-          // Optimistic-lock miss: the other writer bumped the version. Surface as 40001 so the
-          // existing OCC retry re-reads the current state and reconciles.
-          const e = new Error('optimistic version conflict') as Error & { code?: string };
-          e.code = '40001';
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          const cur = await client.query<{ version: number | null }>(
+            'SELECT version FROM incident WHERE incident_id = $1',
+            [DEMO_ID],
+          );
+          const v = Number(cur.rows[0]?.version ?? 0);
+          await client.query(
+            "INSERT INTO incident_event (event_id, incident_id, type, payload, actor, origin_region) VALUES ($1, $2, 'status.changed', $3::jsonb, $4, $5)",
+            [randomUUID(), DEMO_ID, JSON.stringify({ status: target }), region, region],
+          );
+          const upd = await client.query(
+            'UPDATE incident SET version = $1 WHERE incident_id = $2 AND version = $3',
+            [v + 1, DEMO_ID, v],
+          );
+          if ((upd.rowCount ?? 0) === 0) {
+            const e = new Error('optimistic version conflict') as Error & { code?: string };
+            e.code = '40001';
+            throw e;
+          }
+          await client.query('COMMIT');
+        } catch (e) {
+          await client.query('ROLLBACK').catch(() => {});
           throw e;
+        } finally {
+          client.release();
         }
       },
       { onRetry },
@@ -68,23 +89,38 @@ export async function POST() {
     }),
   ]);
 
-  // Strong consistency: read the settled row from BOTH regions and confirm they are identical.
-  const [a, b] = await Promise.all([
-    pA.query('SELECT version, status FROM proof_race WHERE race_id = $1', [RACE_ID]),
-    pB.query('SELECT version, status FROM proof_race WHERE race_id = $1', [RACE_ID]),
-  ]);
-  const rowA = a.rows[0];
-  const rowB = b.rows[0];
-  const agree = !!rowA && !!rowB && rowA.version === rowB.version && rowA.status === rowB.status;
+  // Strong consistency: read the linearized timeline from BOTH regions; the committed sequence is
+  // identical, and the rolled-back loser is absent.
+  const readTimeline = (pool: (typeof pools)[number]) =>
+    pool.query<{
+      event_id: string;
+      type: string;
+      payload: { status?: string };
+      actor: string | null;
+    }>(
+      'SELECT event_id, type, payload, actor FROM incident_event WHERE incident_id = $1 ORDER BY created_at, event_id',
+      [DEMO_ID],
+    );
+  const [a, b] = await Promise.all([readTimeline(pA), readTimeline(pB)]);
+  const digest = (rows: { event_id: string }[]) => rows.map((r) => r.event_id).join(',');
+  const agree = digest(a.rows) === digest(b.rows);
+  const timeline = a.rows.map((r) => ({
+    type: r.type,
+    status: r.payload?.status ?? null,
+    actor: r.actor,
+  }));
+  const lastStatus =
+    [...timeline].reverse().find((t) => t.type === 'status.changed')?.status ?? null;
   const retries = aRetries + bRetries;
 
   return Response.json({
     conflicted: retries > 0,
     loserRegion: bRetries >= aRetries ? rB : rA,
     retries,
-    finalStatus: rowA?.status ?? null,
-    finalVersion: Number(rowA?.version ?? 0),
+    finalStatus: lastStatus,
     agree,
+    count: a.rows.length,
+    timeline,
     regionA: rA,
     regionB: rB,
   });
