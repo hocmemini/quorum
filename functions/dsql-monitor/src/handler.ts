@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { BudgetsClient, DescribeBudgetCommand } from '@aws-sdk/client-budgets';
 import {
   CloudWatchClient,
+  GetMetricDataCommand,
   type MetricDatum,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch';
@@ -32,8 +33,37 @@ export interface MonitorResult {
   latencyP99Ms: number;
 }
 
-/** Best-effort current spend from the budget; falls back to scale-to-zero if the role lacks perms. */
+/** Month-to-date DSQL DPU consumed (AWS/AuroraDSQL TotalDPU, summed across clusters + both regions). */
+async function readDpuMonth(): Promise<number> {
+  const start = new Date();
+  start.setUTCDate(1);
+  start.setUTCHours(0, 0, 0, 0);
+  const query = {
+    Id: 'dpu',
+    Expression: "SUM(SEARCH('{AWS/AuroraDSQL,ClusterId} MetricName=\"TotalDPU\"', 'Sum', 86400))",
+    Period: 86400,
+  };
+  let total = 0;
+  for (const region of ['us-east-1', 'us-east-2']) {
+    try {
+      const res = await new CloudWatchClient({ region }).send(
+        new GetMetricDataCommand({
+          StartTime: start,
+          EndTime: new Date(),
+          MetricDataQueries: [query],
+        }),
+      );
+      for (const v of res.MetricDataResults?.[0]?.Values ?? []) total += v;
+    } catch {
+      // best-effort per region
+    }
+  }
+  return Math.round(total);
+}
+
+/** Best-effort cost: month-to-date DPU (CloudWatch) + dollar spend (budget); scale-to-zero fallback. */
 async function readCost(): Promise<MonitorSnapshot['cost']> {
+  const dpuMonth = await readDpuMonth();
   try {
     const id = await new STSClient({}).send(new GetCallerIdentityCommand({}));
     const b = await new BudgetsClient({ region: 'us-east-1' }).send(
@@ -46,9 +76,10 @@ async function readCost(): Promise<MonitorSnapshot['cost']> {
       monthToDate: Number(b.Budget?.CalculatedSpend?.ActualSpend?.Amount ?? 0),
       limit: Number(b.Budget?.BudgetLimit?.Amount ?? 20),
       note: 'scale-to-zero',
+      dpuMonth,
     };
   } catch {
-    return { monthToDate: 0, limit: 20, note: 'scale-to-zero' };
+    return { monthToDate: 0, limit: 20, note: 'scale-to-zero', dpuMonth };
   }
 }
 

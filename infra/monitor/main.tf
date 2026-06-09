@@ -54,6 +54,11 @@ data "aws_iam_policy_document" "monitor" {
     actions   = ["budgets:ViewBudget"]
     resources = ["*"]
   }
+  statement {
+    sid       = "ReadMetrics"
+    actions   = ["cloudwatch:GetMetricData"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "monitor" {

@@ -63,7 +63,7 @@ export interface MonitorSnapshot {
   writeP99Ms: number;
   consistency: { pass: boolean; crossRegionMs: number };
   failover: { survivalPass: boolean; warmFailoverMs: number };
-  cost: { monthToDate: number; limit: number; note: string };
+  cost: { monthToDate: number; limit: number; note: string; dpuMonth: number };
 }
 
 export interface MonitorStatusTable {
