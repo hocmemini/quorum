@@ -25,6 +25,15 @@ pnpm test
 echo "== 3/4 warm latency + failover benchmark (DEC-015) =="
 pnpm --filter @quorum/db bench
 
-echo "== 4/4 front end =="
-echo "exercise the deployed war room by hand: open an incident, add a note, resolve, and toggle the"
-echo "resilience panel to confirm live failover. Then reset with: scripts/wipe-db.sh --seed"
+echo "== 4/4 front end: chaos-immune provisioning (DEC-025) =="
+BASE="${QUORUM_URL:-https://quorum-h0.vercel.app}"
+JAR="$(mktemp)"
+# /demo must provision (redirect, not 500) even with a both-regions-down chaos cookie present, and
+# the resulting workspace must load healthy with chaos cleared.
+code="$(curl -s -c "$JAR" -o /dev/null -w '%{http_code}' -b 'quorum_chaos_down=us-east-1,us-east-2' "$BASE/demo")"
+[ "$code" = "307" ] || [ "$code" = "302" ] || { echo "FAIL: /demo under both-down returned $code (want 307)"; rm -f "$JAR"; exit 1; }
+wcode="$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/")"
+rm -f "$JAR"
+[ "$wcode" = "200" ] || { echo "FAIL: provisioned war room returned $wcode (want 200)"; exit 1; }
+echo "PASS: /demo provisions ($code) under both-down; war room loads healthy ($wcode)"
+echo "Manual: exercise the war room + drill/restore, then reset with scripts/wipe-db.sh --seed"

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/AutoRefresh';
 import { ControlPlanePanel } from '@/components/ControlPlanePanel';
 import { WorkspaceHeader } from '@/components/WorkspaceHeader';
-import { activeOrgId, chaosState, query, regionHealth } from '@/lib/db';
+import { activeOrgId, chaosState, queryHealthy, regionHealth } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,13 +19,18 @@ export default async function Reliability() {
   const health = await regionHealth();
   let ws: { orgId: string; name: string; joinCode: string } | null = null;
   let snapshot: MonitorSnapshot | null = null;
+  // Chaos-immune reads (DEC-025): through the real pools so the drill + restore controls render in
+  // any chaos state, including both-regions-down. Degrade gracefully; never redirect away from here.
   try {
-    ws = await query((db) => getWorkspace(db, orgId));
-    snapshot = await query((k) => latestMonitorSnapshot(k));
+    ws = await queryHealthy((db) => getWorkspace(db, orgId));
   } catch {
-    // degrade; the panel renders with a null snapshot
+    // ignore; the apparatus + restore controls still render from the chaos cookie
   }
-  if (!ws) redirect('/');
+  try {
+    snapshot = await queryHealthy((k) => latestMonitorSnapshot(k));
+  } catch {
+    // ignore; the panel renders with a null snapshot
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">

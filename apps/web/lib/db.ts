@@ -53,6 +53,14 @@ export async function query<T>(fn: (db: AppDb) => Promise<T>): Promise<T> {
   return getDb().run(fn, { downRegions: await cookieDownRegions() });
 }
 
+/**
+ * Run a DB op IGNORING the session chaos cookie (DEC-025): provisioning and workspace entry must
+ * never be wedged by a prior drill. Reads/writes through the real region pools unconditionally.
+ */
+export async function queryHealthy<T>(fn: (db: AppDb) => Promise<T>): Promise<T> {
+  return getDb().run(fn, { downRegions: [] });
+}
+
 /** The active workspace id from the session cookie (DEC-016), or null if none chosen yet. */
 export async function activeOrgId(): Promise<string | null> {
   return (await cookies()).get(ORG_COOKIE)?.value ?? null;

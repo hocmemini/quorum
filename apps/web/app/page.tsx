@@ -11,6 +11,7 @@ import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { GetStarted } from '@/components/GetStarted';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
 import { Onboarding } from '@/components/Onboarding';
+import { RestoreButton } from '@/components/RestoreButton';
 import { StatusBand } from '@/components/StatusBand';
 import { WorkspaceHeader } from '@/components/WorkspaceHeader';
 import { activeOrgId, chaosState, query } from '@/lib/db';
@@ -81,6 +82,7 @@ export default async function Home() {
             drill on the Reliability surface to restore. In production this requires two
             simultaneous regional outages.
           </p>
+          <RestoreButton regions={chaos.regions} />
         </section>
       ) : (
         <>
