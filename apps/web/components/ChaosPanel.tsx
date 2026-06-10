@@ -61,7 +61,7 @@ export function ChaosPanel({ regions, down }: { regions: string[]; down: string[
               className={cn(
                 'rounded-md border px-3 py-1.5 font-mono text-xs transition-colors disabled:opacity-50',
                 isDown
-                  ? 'border-sev1/50 bg-sev1/10 text-sev1'
+                  ? 'border-drill/50 bg-drill/10 text-drill'
                   : 'border-line bg-raised hover:border-accent',
               )}
             >

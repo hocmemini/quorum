@@ -79,10 +79,10 @@ export function ControlPlanePanel({
             </div>
           );
         })}
-        <div className="rounded-md border border-accent/40 bg-bg p-3">
+        <div className="rounded-md border border-witness/40 bg-bg p-3">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs text-fg">{witness}</span>
-            <span className="rounded bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase text-accent">
+            <span className="rounded bg-witness/15 px-1.5 py-0.5 font-mono text-[10px] uppercase text-witness">
               witness
             </span>
           </div>

@@ -9,7 +9,7 @@ function Node({ label, state }: { label: string; state: NodeState }) {
         'rounded-md border px-2 py-2 text-center font-mono text-[11px]',
         state === 'serving' && 'border-ok bg-ok/10 text-ok',
         state === 'down' && 'border-sev1/60 bg-sev1/5 text-sev1 opacity-60',
-        state === 'witness' && 'border-accent/50 bg-accent/5 text-accent',
+        state === 'witness' && 'border-witness/50 bg-witness/5 text-witness',
         state === 'standby' && 'border-line bg-bg text-muted',
       )}
     >
