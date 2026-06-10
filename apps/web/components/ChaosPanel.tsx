@@ -31,6 +31,12 @@ export function ChaosPanel({ regions, down }: { regions: string[]; down: string[
       } else {
         setFail(null);
       }
+      // Open or resolve the drill incident the operator coordinates from the survivor (DEC-024).
+      await fetch('/api/drill', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ region, action: goingDown ? 'open' : 'resolve' }),
+      }).catch(() => {});
       router.refresh();
     } finally {
       setBusy(false);

@@ -30,6 +30,9 @@ export function parseAlarmEvent(event: AlarmEvent): ParsedAlarm | null {
   const detail = event.detail;
   if (!detail?.alarmName || detail.state?.value !== 'ALARM') return null;
   const alarmName = detail.alarmName;
+  // Showcase-org scoping (DEC-024): only intentional demonstration alarms open incidents; the
+  // monitor's own claim alarms and the e2e smoke alarms are ignored.
+  if (alarmName.startsWith('quorum-dsql-monitor-') || alarmName.startsWith('smoke-')) return null;
   const stamp = detail.state?.timestamp ?? '';
   return {
     incidentId: deterministicId(`incident:${alarmName}`),

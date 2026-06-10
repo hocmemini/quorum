@@ -73,6 +73,23 @@ export const CATALOG: SeedService[] = [
       { name: 'connection saturation', source: 'db-connection-saturation', severity: 'sev1' },
     ],
   },
+  {
+    // Control plane: the surface a failover drill opens an incident against (DEC-024 Part 0).
+    name: 'control-plane',
+    tier: 'tier-1',
+    signals: [
+      {
+        name: 'region-health: us-east-1 unreachable (drill)',
+        source: 'region-health-us-east-1-drill',
+        severity: 'sev1',
+      },
+      {
+        name: 'region-health: us-east-2 unreachable (drill)',
+        source: 'region-health-us-east-2-drill',
+        severity: 'sev1',
+      },
+    ],
+  },
 ];
 
 export function serviceId(name: string): string {
