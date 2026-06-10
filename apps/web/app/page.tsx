@@ -8,12 +8,12 @@ import type { MonitorSnapshot } from '@quorum/db';
 import Link from 'next/link';
 import { AutoRefresh } from '@/components/AutoRefresh';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
-import { ControlPlanePanel } from '@/components/ControlPlanePanel';
+import { GetStarted } from '@/components/GetStarted';
 import { NewIncidentForm } from '@/components/NewIncidentForm';
 import { Onboarding } from '@/components/Onboarding';
-import { WarmUp } from '@/components/WarmUp';
-import { WorkspaceBar } from '@/components/WorkspaceBar';
-import { activeOrgId, chaosState, query, regionHealth } from '@/lib/db';
+import { StatusBand } from '@/components/StatusBand';
+import { WorkspaceHeader } from '@/components/WorkspaceHeader';
+import { activeOrgId, chaosState, query } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,9 +32,7 @@ export default async function Home() {
     );
   }
 
-  // chaosState + regionHealth degrade per-region and never throw, so the panel always renders.
   const chaos = await chaosState();
-  const health = await regionHealth();
 
   let ws: { orgId: string; name: string; joinCode: string } | null = null;
   let incidents: IncidentSummary[] = [];
@@ -65,26 +63,13 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
       <AutoRefresh intervalMs={2500} />
-      <WarmUp />
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
-          <p className="text-sm text-muted">
-            Workspace <span className="text-fg">{ws?.name ?? '(reconnecting)'}</span>
-          </p>
-        </div>
-        {ws ? <WorkspaceBar name={ws.name} joinCode={ws.joinCode} /> : null}
-      </header>
-
-      <ControlPlanePanel
-        snapshot={snapshot}
+      <WorkspaceHeader ws={ws} surface="war-room" />
+      <StatusBand
         serving={chaos.serving}
         degraded={chaos.degraded}
         allDown={chaos.allDown}
         witness={chaos.witness}
-        down={chaos.down}
-        regions={chaos.regions}
-        health={health}
+        snapshot={snapshot}
       />
 
       {unavailable ? (
@@ -92,13 +77,14 @@ export default async function Home() {
           <h2 className="text-sm font-semibold text-sev2">No serving region available</h2>
           <p className="mt-1 text-sm text-muted">
             Both serving regions are marked down. Your data is safe, the {chaos.witness} witness
-            holds a durable quorum copy, but no region can serve reads until one recovers. Restore a
-            region in the control plane above. In production this requires two simultaneous regional
-            outages.
+            holds a durable quorum copy, but no region can serve reads until one recovers. End the
+            drill on the Reliability surface to restore. In production this requires two
+            simultaneous regional outages.
           </p>
         </section>
       ) : (
         <>
+          <GetStarted />
           <NewIncidentForm />
           <section className="mt-6 overflow-hidden rounded-lg border border-line">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-4 py-2">

@@ -100,7 +100,7 @@ export function ControlPlanePanel({
 
       <p className="mt-3 font-mono text-xs text-muted">
         {cost
-          ? `$${cost.monthToDate.toFixed(2)} this month · ${cost.dpuMonth >= 1000 ? `${(cost.dpuMonth / 1000).toFixed(1)}K` : cost.dpuMonth} of 100K free DPU · scale-to-zero`
+          ? `usage: $${cost.monthToDate.toFixed(2)} this month · ${cost.dpuMonth >= 1000 ? `${(cost.dpuMonth / 1000).toFixed(1)}K` : cost.dpuMonth} of 100K free DPU · scale-to-zero`
           : 'scales to zero when idle'}
       </p>
 
