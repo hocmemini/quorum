@@ -41,17 +41,29 @@ export function Onboarding() {
   return (
     <div className="mx-auto mt-16 max-w-md">
       <h1 className="text-2xl font-semibold tracking-tight">Quorum</h1>
-      <p className="mt-1 text-sm text-muted">
-        Incident command plane on multi-region Aurora DSQL. Create a workspace to start, or join one
-        with a code.
+      <p className="mt-1 text-sm text-muted">Incident command plane on multi-region Aurora DSQL.</p>
+
+      {/* Zero-click front door: /demo provisions a fresh, fully-seeded workspace (DEC-024 Part C). */}
+      <a
+        href="/demo"
+        className="mt-6 block rounded-md border border-accent bg-accent/15 px-3 py-3 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent/25"
+      >
+        Explore the demo
+      </a>
+      <p className="mt-1 text-center text-xs text-muted">
+        Spins up a fresh, fully-seeded war room. No signup, no typing.
       </p>
+
+      <div className="my-5 text-center text-xs uppercase tracking-wide text-muted">
+        or make your own
+      </div>
 
       <form
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
           if (name.trim()) post({ action: 'create', name });
         }}
-        className="mt-6 space-y-2"
+        className="space-y-2"
       >
         <input
           className={field}
@@ -84,11 +96,6 @@ export function Onboarding() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm">
-        <a href="/demo" className="text-accent hover:underline">
-          Explore the demo workspace
-        </a>
-      </p>
       {error ? <p className="mt-3 text-center text-xs text-sev1">{error}</p> : null}
     </div>
   );
