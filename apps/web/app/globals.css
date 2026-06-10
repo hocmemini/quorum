@@ -28,3 +28,28 @@ body {
   color: var(--color-fg);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Visible anchor arrival (DEC-026): a fragment link (#verification, #race, #drills, #control-plane)
+   pulses a brief accent ring on the target section that fades within ~2s, so distinct links produce a
+   clear change regardless of page height. Pure CSS, no behavior change. */
+@keyframes target-pulse {
+  0%,
+  45% {
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+section:target {
+  animation: target-pulse 2s ease-out 1;
+  border-radius: 0.5rem;
+  scroll-margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  section:target {
+    animation: none;
+  }
+}

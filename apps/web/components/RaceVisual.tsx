@@ -65,12 +65,14 @@ export function RaceVisual({
   outage,
   downRegion,
   survivor,
+  witness,
 }: {
   result: RaceResult | null;
   busy: boolean;
   outage: boolean;
   downRegion: string;
   survivor: string;
+  witness: string;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
 
@@ -93,8 +95,9 @@ export function RaceVisual({
   if (outage) {
     return (
       <div className="mt-2 rounded-md border border-sev2/30 bg-sev2/5 p-2 font-mono text-xs text-muted">
-        {downRegion} is down for this session - cross-region proofs resume on restore. Serving from{' '}
-        {survivor}.
+        {survivor === 'none'
+          ? `No serving region for this session; proofs resume on restore. Committed data is safe via the ${witness} witness.`
+          : `${downRegion} is down for this session - cross-region proofs resume on restore. Serving from ${survivor}.`}
       </div>
     );
   }

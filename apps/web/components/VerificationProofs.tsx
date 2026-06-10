@@ -28,8 +28,9 @@ type BurstResult = {
   survivor?: string;
 };
 
-// Live verification (DEC-025 split of ProofControls; logic unchanged): the two hero tiles sit with
-// the action that feeds them - run-a-write, then the burst, each with its co-located result line.
+// Live verification (DEC-025 split of ProofControls; logic unchanged). DEC-026: with both regions
+// down (serving === 'none') the writing proofs step aside like the race - disabled, with the
+// banner's resume-on-restore vocabulary - and no copy interpolates a null survivor.
 export function VerificationProofs({
   initWriteMs,
   initCrossMs,
@@ -47,10 +48,12 @@ export function VerificationProofs({
   const [b, setB] = useState<BurstResult | null>(null);
   const [busy, setBusy] = useState<'' | 'write' | 'burst'>('');
 
-  const outage = down.length > 0;
+  const allDown = serving === 'none';
+  const outage = down.length > 0 && !allDown;
   const downRegion = down[0] ?? '';
   const write = w?.commitMs ?? initWriteMs;
   const cross = w?.crossRegionMs ?? initCrossMs;
+  const stepAside = `No serving region for this session; proofs resume on restore. Committed data is safe via the ${witness} witness.`;
 
   async function run(kind: 'write' | 'burst') {
     setBusy(kind);
@@ -70,53 +73,72 @@ export function VerificationProofs({
     <div className="space-y-3">
       <div>
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-md border border-line bg-bg px-3 py-2">
-            <div className="font-mono text-lg font-semibold text-fg">
-              {write != null ? `${write} ms` : '--'}
-            </div>
-            <div className="mt-0.5 text-[11px] text-muted">
-              write commit ({outage ? `survivor ${serving}` : 'local region'})
-            </div>
-          </div>
-          {outage ? (
-            <div className="rounded-md border border-sev2/40 bg-bg px-3 py-2">
-              <div className="font-mono text-sm font-semibold text-sev2">
-                {downRegion} unreachable
+          {allDown ? (
+            <>
+              <div className="rounded-md border border-sev2/40 bg-bg px-3 py-2">
+                <div className="font-mono text-sm font-semibold text-sev2">no serving region</div>
+                <div className="mt-0.5 text-[11px] text-muted">
+                  committed data safe via {witness} witness
+                </div>
               </div>
-              <div className="mt-0.5 text-[11px] text-muted">
-                serving from {serving}, durable via {witness} witness
+              <div className="rounded-md border border-sev2/40 bg-bg px-3 py-2">
+                <div className="font-mono text-sm font-semibold text-sev2">writes paused</div>
+                <div className="mt-0.5 text-[11px] text-muted">resume when a region recovers</div>
               </div>
-            </div>
+            </>
           ) : (
-            <div
-              className={cn(
-                'rounded-md border bg-bg px-3 py-2',
-                w?.confirmed === true
-                  ? 'border-ok/60'
-                  : w?.confirmed === false
-                    ? 'border-sev1/60'
-                    : 'border-line',
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                {w && w.confirmed !== undefined ? (
-                  <span
-                    className={cn('size-1.5 rounded-full', w.confirmed ? 'bg-ok' : 'bg-sev1')}
-                  />
-                ) : null}
-                <span className="font-mono text-lg font-semibold text-fg">
-                  {cross != null ? `${cross} ms` : '--'}
-                </span>
+            <>
+              <div className="rounded-md border border-line bg-bg px-3 py-2">
+                <div className="font-mono text-lg font-semibold text-fg">
+                  {write != null ? `${write} ms` : '--'}
+                </div>
+                <div className="mt-0.5 text-[11px] text-muted">
+                  write commit ({outage ? `survivor ${serving}` : 'local region'})
+                </div>
               </div>
-              <div className="mt-0.5 text-[11px] text-muted">read-your-writes across regions</div>
-            </div>
+              {outage ? (
+                <div className="rounded-md border border-sev2/40 bg-bg px-3 py-2">
+                  <div className="font-mono text-sm font-semibold text-sev2">
+                    {downRegion} unreachable
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted">
+                    serving from {serving}, durable via {witness} witness
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    'rounded-md border bg-bg px-3 py-2',
+                    w?.confirmed === true
+                      ? 'border-ok/60'
+                      : w?.confirmed === false
+                        ? 'border-sev1/60'
+                        : 'border-line',
+                  )}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {w && w.confirmed !== undefined ? (
+                      <span
+                        className={cn('size-1.5 rounded-full', w.confirmed ? 'bg-ok' : 'bg-sev1')}
+                      />
+                    ) : null}
+                    <span className="font-mono text-lg font-semibold text-fg">
+                      {cross != null ? `${cross} ms` : '--'}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted">
+                    read-your-writes across regions
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className="mt-2">
           <button
             type="button"
             onClick={() => run('write')}
-            disabled={busy !== ''}
+            disabled={busy !== '' || allDown}
             className="rounded-md border border-accent/50 bg-accent/10 px-3 py-1.5 font-mono text-xs text-accent hover:bg-accent/20 disabled:opacity-50"
           >
             {busy === 'write'
@@ -124,13 +146,15 @@ export function VerificationProofs({
               : `Run a ${outage ? 'survivor-only' : 'cross-region'} write`}
           </button>
           <div className="mt-1 font-mono text-xs text-muted">
-            {w?.survivorOnly && outage
-              ? `committed to ${w.survivor}, durable via the ${w.witness} witness quorum, ${w.commitMs} ms`
-              : w && !w.survivorOnly && !outage
-                ? `committed in ${w.wroteRegion} in ${w.commitMs} ms, read back ${w.confirmed ? 'identical' : 'MISMATCH'} from ${w.readRegion} in ${w.readBackMs} ms - strong consistency`
-                : outage
-                  ? `${downRegion} is down for this session; commits go to ${serving}, durable via the ${witness} witness quorum`
-                  : 'write in one region, read it back identical from the other (read-your-writes, strong consistency)'}
+            {allDown
+              ? stepAside
+              : w?.survivorOnly && outage
+                ? `committed to ${w.survivor}, durable via the ${w.witness} witness quorum, ${w.commitMs} ms`
+                : w && !w.survivorOnly && !outage
+                  ? `committed in ${w.wroteRegion} in ${w.commitMs} ms, read back ${w.confirmed ? 'identical' : 'MISMATCH'} from ${w.readRegion} in ${w.readBackMs} ms - strong consistency`
+                  : outage
+                    ? `${downRegion} is down for this session; commits go to ${serving}, durable via the ${witness} witness quorum`
+                    : 'write in one region, read it back identical from the other (read-your-writes, strong consistency)'}
           </div>
         </div>
       </div>
@@ -139,19 +163,21 @@ export function VerificationProofs({
         <button
           type="button"
           onClick={() => run('burst')}
-          disabled={busy !== ''}
+          disabled={busy !== '' || allDown}
           className="rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-xs hover:border-accent disabled:opacity-50"
         >
           {busy === 'burst' ? 'bursting...' : 'Burst: 50 concurrent'}
         </button>
         <div className={cn('mt-1 font-mono text-xs', b?.diverged ? 'text-sev1' : 'text-muted')}>
-          {b?.survivorOnly && outage
-            ? `${b.committed}/${b.total} committed to ${b.survivor}, durable via quorum, ${b.conflicts} conflicts, ${b.minMs}-${b.maxMs} ms spread`
-            : b && !b.survivorOnly && !outage
-              ? `${b.committed}/${b.total} committed, ${b.conflicts} conflicts, ${b.minMs}-${b.maxMs} ms spread; both regions read ${b.countA} & ${b.countB} - ${b.diverged ? 'DIVERGENCE' : 'one consistent log, zero divergence'}`
-              : outage
-                ? `survivor-only during the outage: all 50 commit to ${serving}, durable via quorum`
-                : '50 simultaneous writes from both regions, then read both regions back identical'}
+          {allDown
+            ? stepAside
+            : b?.survivorOnly && outage
+              ? `${b.committed}/${b.total} committed to ${b.survivor}, durable via quorum, ${b.conflicts} conflicts, ${b.minMs}-${b.maxMs} ms spread`
+              : b && !b.survivorOnly && !outage
+                ? `${b.committed}/${b.total} committed, ${b.conflicts} conflicts, ${b.minMs}-${b.maxMs} ms spread; both regions read ${b.countA} & ${b.countB} - ${b.diverged ? 'DIVERGENCE' : 'one consistent log, zero divergence'}`
+                : outage
+                  ? `survivor-only during the outage: all 50 commit to ${serving}, durable via quorum`
+                  : '50 simultaneous writes from both regions, then read both regions back identical'}
         </div>
       </div>
     </div>

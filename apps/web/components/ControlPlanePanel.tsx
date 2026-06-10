@@ -114,7 +114,7 @@ export function ControlPlanePanel({
       <section id="race" className={card}>
         <h2 className={head}>Consistency under contention</h2>
         <div className="mt-3">
-          <RaceProof down={down} serving={serving} />
+          <RaceProof down={down} serving={serving} witness={witness} />
         </div>
       </section>
 

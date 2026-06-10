@@ -5,7 +5,15 @@ import { type RaceResult, RaceVisual } from '@/components/RaceVisual';
 
 // Consistency under contention (DEC-025 split of ProofControls; logic unchanged): the no-split-brain
 // race with its two-region visual and the demonstration-incident timeline, its own card.
-export function RaceProof({ down, serving }: { down: string[]; serving: string }) {
+export function RaceProof({
+  down,
+  serving,
+  witness,
+}: {
+  down: string[];
+  serving: string;
+  witness: string;
+}) {
   const [race, setRace] = useState<RaceResult | null>(null);
   const [busy, setBusy] = useState(false);
   const outage = down.length > 0;
@@ -42,6 +50,7 @@ export function RaceProof({ down, serving }: { down: string[]; serving: string }
         outage={outage}
         downRegion={downRegion}
         survivor={serving}
+        witness={witness}
       />
     </div>
   );
