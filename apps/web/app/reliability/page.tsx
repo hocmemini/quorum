@@ -37,10 +37,10 @@ export default async function Reliability() {
       <AutoRefresh intervalMs={2500} />
       <WorkspaceHeader ws={ws} surface="reliability" />
       <p className="mt-3 max-w-2xl text-sm text-muted">
-        Live verification of the control plane across regions: latency, read-your-writes,
-        consistency under contention, throughput, and failover drills. Every proof is measured on
-        the click, never canned. A failover drill here opens an incident in the war room to
-        coordinate from the survivor.
+        Live verification of the control plane across regions: latency and read-your-writes,
+        throughput, consistency under contention, and failover drills. Every proof is measured on
+        the click, never canned. A failover drill opens an incident in the war room to coordinate
+        from the survivor.
       </p>
       <ControlPlanePanel
         snapshot={snapshot}

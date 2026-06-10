@@ -1,21 +1,25 @@
 import type { MonitorSnapshot } from '@quorum/db';
-import Link from 'next/link';
+import { StatusBandDrillButton } from '@/components/StatusBandDrillButton';
 import { cn } from '@/lib/utils';
 
-// Compact control-plane status band on the war room (DEC-024 Part A): serving region + health, the
-// latest consistency-check result, and a link into the Reliability surface to run a drill. Reads the
+// Compact control-plane status band on the war room (DEC-024/025): serving region + health, the
+// latest consistency-check result, and an in-place drill control (label matches effect). Reads the
 // existing DSQL status snapshot on the existing poll cadence; no new claims.
 export function StatusBand({
   serving,
   degraded,
   allDown,
   witness,
+  down,
+  regions,
   snapshot,
 }: {
   serving: string;
   degraded: boolean;
   allDown: boolean;
   witness: string;
+  down: string[];
+  regions: string[];
   snapshot: MonitorSnapshot | null;
 }) {
   const consistency = snapshot?.consistency;
@@ -43,12 +47,7 @@ export function StatusBand({
         ) : null}
         <span className="text-muted">witness {witness}</span>
       </div>
-      <Link
-        href="/reliability"
-        className="rounded-md border border-accent/50 bg-accent/10 px-2.5 py-1 font-mono text-xs text-accent hover:bg-accent/20"
-      >
-        Run a failover drill
-      </Link>
+      <StatusBandDrillButton serving={serving} down={down} regions={regions} />
     </section>
   );
 }

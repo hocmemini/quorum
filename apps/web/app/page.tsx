@@ -70,6 +70,8 @@ export default async function Home() {
         degraded={chaos.degraded}
         allDown={chaos.allDown}
         witness={chaos.witness}
+        down={chaos.down}
+        regions={chaos.regions}
         snapshot={snapshot}
       />
 

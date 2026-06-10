@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { type RaceResult, RaceVisual } from '@/components/RaceVisual';
 import { cn } from '@/lib/utils';
 
 type WriteResult = {
@@ -29,9 +28,9 @@ type BurstResult = {
   survivor?: string;
 };
 
-type Kind = 'write' | 'burst' | 'race';
-
-export function ProofControls({
+// Live verification (DEC-025 split of ProofControls; logic unchanged): the two hero tiles sit with
+// the action that feeds them - run-a-write, then the burst, each with its co-located result line.
+export function VerificationProofs({
   initWriteMs,
   initCrossMs,
   down,
@@ -46,23 +45,21 @@ export function ProofControls({
 }) {
   const [w, setW] = useState<WriteResult | null>(null);
   const [b, setB] = useState<BurstResult | null>(null);
-  const [race, setRace] = useState<RaceResult | null>(null);
-  const [busy, setBusy] = useState<'' | Kind>('');
+  const [busy, setBusy] = useState<'' | 'write' | 'burst'>('');
 
   const outage = down.length > 0;
   const downRegion = down[0] ?? '';
   const write = w?.commitMs ?? initWriteMs;
   const cross = w?.crossRegionMs ?? initCrossMs;
 
-  async function run(kind: Kind) {
+  async function run(kind: 'write' | 'burst') {
     setBusy(kind);
     try {
       const res = await fetch(`/api/proof/${kind}`, { method: 'POST' });
       if (res.ok) {
         const d = await res.json();
         if (kind === 'write') setW(d as WriteResult);
-        else if (kind === 'burst') setB(d as BurstResult);
-        else setRace(d as RaceResult);
+        else setB(d as BurstResult);
       }
     } finally {
       setBusy('');
@@ -70,32 +67,7 @@ export function ProofControls({
   }
 
   return (
-    <div className="mt-3 space-y-3">
-      {/* Centerpiece: two writers, one truth, no split-brain. Steps aside during a simulated outage. */}
-      <div className="rounded-md border border-accent/40 bg-accent/5 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="font-mono text-xs font-semibold text-accent">
-            Two writers, one truth, no split-brain
-          </span>
-          <button
-            type="button"
-            onClick={() => run('race')}
-            disabled={busy !== '' || outage}
-            className="rounded-md border border-accent/60 bg-accent/15 px-3 py-1.5 font-mono text-xs text-accent hover:bg-accent/25 disabled:opacity-50"
-          >
-            {busy === 'race' ? 'racing...' : 'Race two writers'}
-          </button>
-        </div>
-        <RaceVisual
-          result={race}
-          busy={busy === 'race'}
-          outage={outage}
-          downRegion={downRegion}
-          survivor={serving}
-        />
-      </div>
-
-      {/* Read-your-writes across regions; shows the survival state during a simulated outage. */}
+    <div className="space-y-3">
       <div>
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-md border border-line bg-bg px-3 py-2">
@@ -163,7 +135,6 @@ export function ProofControls({
         </div>
       </div>
 
-      {/* Throughput; survivor-only during a simulated outage. */}
       <div>
         <button
           type="button"
