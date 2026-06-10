@@ -91,6 +91,19 @@ The stack is deployed and verified end-to-end against the live clusters.
   claim), the two-region race steps aside with a resume-on-restore note, and the read-your-writes tile
   shows the survival state ("us-east-1 unreachable, serving from us-east-2"). On restore every proof
   returns to full cross-region behavior; symmetric for either region. Validated live both directions.
+- **Drill incidents, product surfaces, ephemeral demo (DEC-024, shipped at rung 1):** Part 0 - a
+  failover drill opens a real, idempotent, clearly-labeled region-impairment incident in the current
+  workspace (opening signal region-health, service control-plane, sev1) coordinated from the survivor;
+  restore resolves it; repeated toggles never duplicate; ingest is scoped so the monitor's own alarms
+  and the e2e smoke alarms no longer open showcase incidents (apigw-5xx preserved). Part C - /demo and the splash
+  provision a fresh, auto-named, fully-seeded workspace per visitor (no collisions); the shared demo
+  org is retained unlinked as the live-ingest showcase; the reset cron is retired. Part A (rung 1) -
+  the war room is the product surface (control-plane status band + Get-started checklist over the
+  incident list and form) and a /reliability route holds the apparatus under product language; WarmUp
+  moves to the root layout. Part B - the palette gains a distinct witness color (cyan) and a
+  drill-active amber, and the v0 prompt is rewritten for both surfaces (a full v0-generated visual port
+  is an optional follow-up). Follow-ups: provision rate-limit, a 7-day auto-workspace sweep, and
+  cleanup of pre-exclusion stale incidents in the internal demo org.
 
 ## 1. Snapshot
 

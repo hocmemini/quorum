@@ -64,6 +64,14 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     the race steps aside, and the read-your-writes tile shows the survival state; UI result rendering is
     gated on the live chaos state so a stale result never shows in the wrong mode. On restore, full
     cross-region behavior returns. Symmetric for either region down.
+16. **Drill incidents, two-surface IA, ephemeral provisioning (DEC-024, rung 1):** the chaos toggle
+    opens an idempotent, real, labeled region-impairment incident (control-plane / region-health,
+    sev1) coordinated from the survivor, restore resolves it; ingest excludes the monitor's own alarms
+    and the e2e smoke alarms from the showcase org. The war room (status band + checklist + incidents) and a new
+    /reliability route (the apparatus, product language) are the two product surfaces sharing a header;
+    WarmUp fires from the root layout. /demo and the splash provision a fresh seeded workspace per
+    visitor; the shared demo org is retained as the unlinked live-ingest showcase, reset cron retired.
+    Palette adds a distinct witness color + drill-active amber; the v0 prompt covers both surfaces.
 
 ---
 
