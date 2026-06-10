@@ -42,13 +42,34 @@ describe('parseAlarmEvent', () => {
     ).toBeNull();
     expect(parseAlarmEvent({ ...alarmEvent, source: 'aws.other' })).toBeNull();
   });
+
+  it('excludes the monitor and smoke alarms from the showcase org (DEC-024)', () => {
+    const alarm = (name: string) => ({
+      ...alarmEvent,
+      detail: { ...alarmEvent.detail, alarmName: name },
+    });
+    expect(parseAlarmEvent(alarm('quorum-dsql-monitor-claim-c1-fail'))).toBeNull();
+    expect(parseAlarmEvent(alarm('smoke-12345'))).toBeNull();
+    expect(parseAlarmEvent(alarm('apigw-5xx'))).not.toBeNull();
+  });
 });
 
 // Live ingestion smoke (WP-11). Gated on a real DSQL endpoint; runs at go-live.
 const LIVE = !!process.env.DSQL_ENDPOINT_PRIMARY;
 
 describe.skipIf(!LIVE)('handler integration (live DSQL)', () => {
-  it('opens an incident from a CloudWatch alarm event', async () => {
+  it('opens an incident from a demonstration alarm', async () => {
+    const res = await handler({
+      source: 'aws.cloudwatch',
+      region: process.env.DSQL_REGION ?? 'us-east-1',
+      // A demonstration alarm (not excluded); deterministic id keeps it idempotent (DEC-024).
+      detail: { alarmName: 'apigw-5xx', state: { value: 'ALARM', timestamp: '2026-06-07T00:00:00Z' } },
+    });
+    expect(res.ok).toBe(true);
+    expect(res.incidentId).toBeTruthy();
+  }, 60_000);
+
+  it('excludes a smoke alarm from the showcase org (DEC-024)', async () => {
     const res = await handler({
       source: 'aws.cloudwatch',
       region: process.env.DSQL_REGION ?? 'us-east-1',
@@ -58,6 +79,6 @@ describe.skipIf(!LIVE)('handler integration (live DSQL)', () => {
       },
     });
     expect(res.ok).toBe(true);
-    expect(res.incidentId).toBeTruthy();
+    expect(res.incidentId).toBeUndefined();
   }, 60_000);
 });
