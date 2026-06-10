@@ -63,7 +63,10 @@ describe.skipIf(!LIVE)('handler integration (live DSQL)', () => {
       source: 'aws.cloudwatch',
       region: process.env.DSQL_REGION ?? 'us-east-1',
       // A demonstration alarm (not excluded); deterministic id keeps it idempotent (DEC-024).
-      detail: { alarmName: 'apigw-5xx', state: { value: 'ALARM', timestamp: '2026-06-07T00:00:00Z' } },
+      detail: {
+        alarmName: 'apigw-5xx',
+        state: { value: 'ALARM', timestamp: '2026-06-07T00:00:00Z' },
+      },
     });
     expect(res.ok).toBe(true);
     expect(res.incidentId).toBeTruthy();
