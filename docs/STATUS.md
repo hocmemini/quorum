@@ -104,6 +104,19 @@ The stack is deployed and verified end-to-end against the live clusters.
   drill-active amber, and the v0 prompt is rewritten for both surfaces (a full v0-generated visual port
   is an optional follow-up). Follow-ups: provision rate-limit, a 7-day auto-workspace sweep, and
   cleanup of pre-exclusion stale incidents in the internal demo org.
+- **Chaos-immune provisioning, guaranteed restore, label integrity, Reliability flow (DEC-025):** the
+  both-regions-down /demo 500 is fixed - provisioning (/demo + splash) writes through the real pools via
+  queryHealthy (ignoring the chaos cookie) and clears it, so a prior drill can no longer brick the front
+  door and every entered workspace starts healthy. The Reliability page reads via queryHealthy and never
+  redirects away, so its drill + restore controls render in any chaos state; the war-room
+  no-serving-region banner gains an inline "End drills, restore all regions" exit (clears chaos +
+  resolves drill incidents). The status-band drill button executes in place (label matches effect); the
+  checklist is rephrased honestly. The Reliability apparatus is reordered into a designed arc under
+  visible section headers with anchor ids (Control plane #control-plane, Live verification #verification,
+  Consistency under contention #race, Failover drills #drills, Usage), splitting ProofControls into
+  VerificationProofs + RaceProof with logic and numbers unchanged; the on-page Try-this box is removed.
+  Root cause of the 500: the provision path called the chaos-aware query(), which found no reachable
+  region under both-down and threw.
 
 ## 1. Snapshot
 

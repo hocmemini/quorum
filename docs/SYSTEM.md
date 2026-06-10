@@ -72,6 +72,14 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     WarmUp fires from the root layout. /demo and the splash provision a fresh seeded workspace per
     visitor; the shared demo org is retained as the unlinked live-ingest showcase, reset cron retired.
     Palette adds a distinct witness color + drill-active amber; the v0 prompt covers both surfaces.
+17. **Chaos-immune provisioning, guaranteed restore, label integrity, Reliability flow (DEC-025):**
+    provisioning and workspace entry run via queryHealthy (ignoring the chaos cookie) and clear it, so
+    /demo no longer 500s under both-regions-down and entered sessions start healthy. The Reliability
+    page reads via queryHealthy and never redirects, so drill/restore controls render in every chaos
+    state; the no-serving-region banner has an inline restore. The status-band drill button executes in
+    place (label matches effect). The Reliability apparatus is a designed arc under section headers with
+    anchor ids (control-plane, verification, race, drills, usage); ProofControls is split into
+    VerificationProofs + RaceProof and the Try-this box removed; logic, endpoints, and numbers unchanged.
 
 ---
 

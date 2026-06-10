@@ -9,6 +9,11 @@ layout shells, the status band, tiles, checklists) may be adopted from v0 wholes
 components (ProbeRunner, RaceVisual, BurstRunner, DrillControls) keep their existing logic and
 receive **styling only**. No API route, data-flow, or claim-copy change anywhere.
 
+**Timing (DEC-025).** This prompt reflects the shipped demo-path reality: chaos-immune provisioning,
+the executable in-place status-band drill, the no-serving-region banner with an inline restore, and
+the reordered Reliability arc. Run v0 against it only after DEC-025 has landed, so the styled
+reference matches what ships rather than the older accreted layout.
+
 ---
 
 ## Prompt (paste this)
@@ -26,12 +31,19 @@ copyable join code):
 
 ### Surface 1, War room (the calm product surface)
 
-- A compact **control-plane status band**: a health dot (green serving / amber failover-active / red
-  no-serving-region), the serving region (e.g. `us-east-1`), a "consistency 36 ms" chip with a
-  green dot, the witness region, and a right-aligned "Run a failover drill" button linking to the
-  Reliability surface.
-- A **Get-started checklist** (3 steps, product tone) whose first step points at the Reliability
-  surface.
+- A compact **control-plane status band** with three poll-driven states: **healthy** (green dot,
+  "serving us-east-1"), **failover active** (amber dot, "serving us-east-2 · failover active"), and
+  **no serving region** (red dot, "no serving region (data safe via witness)"). It shows a
+  "consistency 36 ms" chip with a green dot and the witness region. Its right-aligned button is an
+  **executable in-place drill control** whose label matches its effect: "Run a failover drill:
+  us-east-1" when healthy (it fails the serving region and opens a drill incident in the list below),
+  and "End drill, restore us-east-1" (amber) while a drill is active.
+- A **Get-started checklist** (3 steps): step 1 navigates to the Reliability surface, step 2 links to
+  the Reliability live-verification section anchor, and step 3 is plain text referencing the status
+  band's own drill button (it does not pretend to be a link that acts).
+- A **NoServingRegionBanner** shown when both regions are down: it explains the state honestly (data
+  safe via the witness; no region serves reads until one recovers) and carries an **inline "End
+  drills, restore all regions" button**, so the escape exists exactly where the trap is explained.
 - An inline **New incident** form (title input, severity select sev1/sev2/sev3, "Open incident").
 - An **incidents table**: Incident (linked title), Status badge (open / acknowledged / resolved),
   Severity badge (sev1 red, sev2 amber, sev3 blue), Origin region, Opened timestamp; a clean empty
@@ -39,8 +51,11 @@ copyable join code):
 
 ### Surface 2, Reliability (the verification apparatus, under product language)
 
-A single column of cards, each a section with a product header ("Live verification", "Consistency
-under contention", "Failover drills", "Usage"):
+An intro line, then a single column of section cards in this exact order, each with a visible product
+header and an anchor id, and NO on-page checklist (the war-room checklist carries guidance):
+**Control plane** (#control-plane: diagram + region tiles as one state zone), **Live verification**
+(#verification: hero tiles + run-a-write + burst), **Consistency under contention** (#race: the
+race), **Failover drills** (#drills), and **Usage** (a small labeled element):
 
 - **ArchitectureDiagram**: two full regions (`us-east-1`, `us-east-2`) side by side with a
   bidirectional sync arrow between them, and the `us-west-2` **witness** below, distinct. The
@@ -62,7 +77,8 @@ under contention", "Failover drills", "Usage"):
 - **DrillControls**: one button per region, "Run failover drill: us-east-1" normally and "End drill,
   restore us-east-1" in an **amber drill-active** state, with a measured failover line ("failed over
   to us-east-2 in 30 ms"). A note explains a drill opens an incident in the war room to coordinate.
-- **UsageMeter**: one line, "usage: $0.00 this month, 1.1K of 100K free DPU, scale-to-zero".
+- **UsageMeter**: its own small labeled element, "Usage: $0.00 this month · 1.1K of 100K free DPU ·
+  scale-to-zero", not an unlabeled orphan line between proofs.
 - A muted **deferral footer**: "Deep per-service metrics live in your Grafana or Datadog. Quorum is
   the coordination plane that outlives the region they run in."
 
