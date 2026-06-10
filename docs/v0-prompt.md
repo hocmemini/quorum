@@ -38,9 +38,10 @@ copyable join code):
   **executable in-place drill control** whose label matches its effect: "Run a failover drill:
   us-east-1" when healthy (it fails the serving region and opens a drill incident in the list below),
   and "End drill, restore us-east-1" (amber) while a drill is active.
-- A **Get-started checklist** (3 steps): step 1 navigates to the Reliability surface, step 2 links to
-  the Reliability live-verification section anchor, and step 3 is plain text referencing the status
-  band's own drill button (it does not pretend to be a link that acts).
+- A **Get-started checklist** (3 steps) with **exactly one link** (two distinct links to the same
+  place read as broken): step 1 links to the Reliability live-verification section anchor; steps 2 and
+  3 are plain text (run a drill with the status-band button; open and resolve the drill incident from
+  the survivor).
 - A **NoServingRegionBanner** shown when both regions are down: it explains the state honestly (data
   safe via the witness; no region serves reads until one recovers) and carries an **inline "End
   drills, restore all regions" button**, so the escape exists exactly where the trap is explained.
@@ -67,7 +68,10 @@ race), **Failover drills** (#drills), and **Usage** (a small labeled element):
   regions", each a big monospace millisecond value with a small label; the second gets a green dot
   when confirmed identical.
 - **ProbeRunner** (run-a-write): an accent button "Run a cross-region write" with a co-located
-  result line ("committed in us-east-1 in 35 ms, read back identical from us-east-2 in 14 ms").
+  result line ("committed in us-east-1 in 35 ms, read back identical from us-east-2 in 14 ms"). When
+  **both regions are down** it and the burst **step aside** (disabled) with the note "No serving
+  region for this session; proofs resume on restore. Committed data is safe via the us-west-2
+  witness." and the hero tiles show a no-serving state, never a null survivor.
 - **RaceVisual** (no-split-brain): a headline "Two writers, one truth, no split-brain", a "Race two
   writers" button, then two region boxes that each show an attempted value, the loser flashes a red
   conflict, both snap to a single agreed value with a green "no fork" check; a small secondary
@@ -94,7 +98,9 @@ Background near `#0b0e14`; panels `#141925`; borders `#232a3b`; light text; mute
 states: **serving/healthy green `#3fb950`**, **down red `#ff5c5c`**, **drill-active amber
 `#ffb020`**, and a **witness blue distinct from links** (use a cyan/teal such as `#2dd4bf` for the
 witness, keep `#4aa3ff` for links/active). Severity: sev1 red, sev2 amber, sev3 blue. Use shadcn/ui
-(Card, Badge, Button, Table, Input, Select). Monospace for all data values.
+(Card, Badge, Button, Table, Input, Select). Monospace for all data values. Section anchors
+(#control-plane, #verification, #race, #drills) pulse a brief accent ring on arrival (CSS `:target`,
+fading within ~2s), so a fragment link produces a visible change regardless of page height.
 
 Name components so they map to the existing app: `WorkspaceHeader`, `StatusBand`, `GetStarted`,
 `NewIncidentForm`, `IncidentsTable`, `StatusBadge`, `SeverityBadge`, `ArchitectureDiagram`,

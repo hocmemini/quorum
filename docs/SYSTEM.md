@@ -80,6 +80,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     place (label matches effect). The Reliability apparatus is a designed arc under section headers with
     anchor ids (control-plane, verification, race, drills, usage); ProofControls is split into
     VerificationProofs + RaceProof and the Try-this box removed; logic, endpoints, and numbers unchanged.
+18. **Truthful both-down proofs, single-link checklist, anchor pulse (DEC-026):** the writing proofs
+    (run-a-write, burst) step aside like the race when both regions are down (serving is none) -
+    disabled, with the banner's resume-on-restore witness vocabulary - so no copy interpolates a null
+    survivor in any state; single-region-down is unchanged (witness threaded through
+    RaceProof/RaceVisual). The Get-started checklist carries exactly one navigational link; a CSS
+    :target pulse makes anchor arrival visible on the Reliability sections regardless of page height.
 
 ---
 

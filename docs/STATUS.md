@@ -117,6 +117,16 @@ The stack is deployed and verified end-to-end against the live clusters.
   VerificationProofs + RaceProof with logic and numbers unchanged; the on-page Try-this box is removed.
   Root cause of the 500: the provision path called the chaos-aware query(), which found no reachable
   region under both-down and threw.
+- **Truthful both-down proofs, single-link checklist, anchor pulse (DEC-026):** with both regions
+  marked down, run-a-write and the burst now step aside like the race - disabled, with the banner's
+  vocabulary ("No serving region for this session; proofs resume on restore. Committed data is safe via
+  the us-west-2 witness.") - and the hero tiles show the no-serving state; no copy interpolates a null
+  survivor in any state ("survivor none", "serving from none", "commits go to none", "Serving from
+  none." can no longer render), and single-region-down behavior is unchanged. The war-room Get-started
+  checklist carries exactly one navigational link (/reliability#verification) with two plain steps. A
+  CSS :target pulse highlights the arrived-at Reliability section, fading within ~2s, regardless of
+  page height. Validated live: the both-down sweep is clean, single-down references the real survivor,
+  and restore returns full cross-region behavior.
 
 ## 1. Snapshot
 
