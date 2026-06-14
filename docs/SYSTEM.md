@@ -86,6 +86,13 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     survivor in any state; single-region-down is unchanged (witness threaded through
     RaceProof/RaceVisual). The Get-started checklist carries exactly one navigational link; a CSS
     :target pulse makes anchor arrival visible on the Reliability sections regardless of page height.
+19. **Provision rate-limiting (DEC-027):** /demo and /api/workspace create are rate-limited per
+    client-IP HMAC via a sliding window in a dedicated DSQL rate_limit table (migration 0009),
+    enforced before provisioning on the chaos-immune healthy path (DEC-025); over the limit (default 5
+    per 600s, env-tunable, optional global backstop) returns a clean 429 (an on-brand page for /demo,
+    JSON for the create POST) and provisions nothing. The monitor prunes rows older than 24h; the e2e
+    suite uses an env-gated bypass header. Only the IP hash is stored, never the raw IP; the salt and
+    the bypass token live in env only, never committed.
 
 ---
 

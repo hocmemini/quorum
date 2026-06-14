@@ -102,8 +102,8 @@ The stack is deployed and verified end-to-end against the live clusters.
   incident list and form) and a /reliability route holds the apparatus under product language; WarmUp
   moves to the root layout. Part B - the palette gains a distinct witness color (cyan) and a
   drill-active amber, and the v0 prompt is rewritten for both surfaces (a full v0-generated visual port
-  is an optional follow-up). Follow-ups: provision rate-limit, a 7-day auto-workspace sweep, and
-  cleanup of pre-exclusion stale incidents in the internal demo org.
+  is an optional follow-up). Follow-ups (provision rate-limit shipped in DEC-027): a 7-day
+  auto-workspace sweep and cleanup of pre-exclusion stale incidents in the internal demo org.
 - **Chaos-immune provisioning, guaranteed restore, label integrity, Reliability flow (DEC-025):** the
   both-regions-down /demo 500 is fixed - provisioning (/demo + splash) writes through the real pools via
   queryHealthy (ignoring the chaos cookie) and clears it, so a prior drill can no longer brick the front
@@ -127,6 +127,15 @@ The stack is deployed and verified end-to-end against the live clusters.
   CSS :target pulse highlights the arrived-at Reliability section, fading within ~2s, regardless of
   page height. Validated live: the both-down sweep is clean, single-down references the real survivor,
   and restore returns full cross-region behavior.
+- **Provision rate-limiting (DEC-027):** /demo and the splash create path are rate-limited per
+  client-IP hash (HMAC of Vercel's x-forwarded-for / x-real-ip, salt in env; only the hash is stored)
+  via a sliding window in a dedicated DSQL rate_limit table (migration 0009), enforced before any
+  workspace is created on the chaos-immune healthy path (DEC-025) so a drill never breaks it. Over the
+  per-IP limit (default 5 per 600s, env-tunable, optional global backstop) returns a clean 429 - an
+  on-brand page for the /demo navigation, JSON for the create POST - and provisions nothing. The
+  monitor prunes rows older than 24h; the e2e suite bypasses via an env-gated header. Validated live:
+  five provisions then 429, a normal provision and a both-down provision both succeed, the bypass
+  works, and the 429 page renders on-brand.
 
 ## 1. Snapshot
 
