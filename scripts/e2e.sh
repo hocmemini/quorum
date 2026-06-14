@@ -27,10 +27,14 @@ pnpm --filter @quorum/db bench
 
 echo "== 4/4 front end: chaos-immune provisioning (DEC-025) =="
 BASE="${QUORUM_URL:-https://quorum-h0.vercel.app}"
+# Rate-limit bypass (DEC-027) so the suite is never throttled; token from gitignored env, never committed.
+[ -f "$HOME/.config/quorum/ratelimit.env" ] && . "$HOME/.config/quorum/ratelimit.env"
+BYPASS=()
+[ -n "${RATE_LIMIT_BYPASS_TOKEN:-}" ] && BYPASS=(-H "x-ratelimit-bypass: $RATE_LIMIT_BYPASS_TOKEN")
 JAR="$(mktemp)"
 # /demo must provision (redirect, not 500) even with a both-regions-down chaos cookie present, and
 # the resulting workspace must load healthy with chaos cleared.
-code="$(curl -s -c "$JAR" -o /dev/null -w '%{http_code}' -b 'quorum_chaos_down=us-east-1,us-east-2' "$BASE/demo")"
+code="$(curl -s -c "$JAR" "${BYPASS[@]}" -o /dev/null -w '%{http_code}' -b 'quorum_chaos_down=us-east-1,us-east-2' "$BASE/demo")"
 [ "$code" = "307" ] || [ "$code" = "302" ] || { echo "FAIL: /demo under both-down returned $code (want 307)"; rm -f "$JAR"; exit 1; }
 wcode="$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/")"
 rm -f "$JAR"

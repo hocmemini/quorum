@@ -82,6 +82,16 @@ export interface ProofRaceTable {
   updated_at: Generated<Date>;
 }
 
+/**
+ * Per-IP provision attempts for sliding-window rate-limiting (DEC-027); kept separate from the
+ * domain event log so the model stays clean. Append-only; the monitor prunes rows older than 24h.
+ */
+export interface RateLimitTable {
+  id: string; // uuid, app-supplied
+  ip_hash: string; // HMAC of the client IP - never the raw IP
+  created_at: Generated<Date>;
+}
+
 export interface Database {
   service: ServiceTable;
   signal: SignalTable;
@@ -90,6 +100,7 @@ export interface Database {
   workspace: WorkspaceTable;
   monitor_status: MonitorStatusTable;
   proof_race: ProofRaceTable;
+  rate_limit: RateLimitTable;
 }
 
 export type Service = Selectable<ServiceTable>;

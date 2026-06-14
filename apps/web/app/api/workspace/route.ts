@@ -1,6 +1,7 @@
 import { createWorkspace, getWorkspaceByCode } from '@quorum/api';
 import { NextResponse } from 'next/server';
 import { CHAOS_COOKIE_NAME, ORG_COOKIE_NAME, queryHealthy } from '@/lib/db';
+import { checkProvisionRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,15 @@ export async function POST(req: Request) {
   if (body.action === 'create') {
     const name = (body.name ?? '').trim().slice(0, 60);
     if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
+    const limited = await checkProvisionRateLimit(req);
+    if (limited)
+      return NextResponse.json(
+        {
+          error: 'Too many new workspaces from your network. Try again shortly.',
+          retryAfter: limited.retryAfter,
+        },
+        { status: 429, headers: { 'retry-after': String(limited.retryAfter) } },
+      );
     const ws = await queryHealthy((db) => createWorkspace(db, name));
     const res = NextResponse.json(ws, { status: 201 });
     res.cookies.set(ORG_COOKIE_NAME, ws.orgId, COOKIE);

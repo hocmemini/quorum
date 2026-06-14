@@ -181,6 +181,10 @@ export const handler = async (): Promise<MonitorResult> => {
       await conn
         .query("DELETE FROM monitor_status WHERE created_at < now() - interval '2 hours'")
         .catch(() => undefined);
+      // Prune provision rate-limit rows older than 24h (DEC-027); idempotent + cheap.
+      await conn
+        .query("DELETE FROM rate_limit WHERE created_at < now() - interval '24 hours'")
+        .catch(() => undefined);
     });
 
     // Keep a baseline Vercel instance + cluster warm (DEC-020): ping the warm-up endpoint so a
