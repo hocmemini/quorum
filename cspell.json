@@ -107,7 +107,8 @@
     "linearizes",
     "linearized",
     "linearizing",
-    "transactionally"
+    "transactionally",
+    "HMAC"
   ],
   "ignorePaths": [
     "node_modules/**",
