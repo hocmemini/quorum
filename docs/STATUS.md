@@ -136,6 +136,20 @@ The stack is deployed and verified end-to-end against the live clusters.
   monitor prunes rows older than 24h; the e2e suite bypasses via an env-gated header. Validated live:
   five provisions then 429, a normal provision and a both-down provision both succeed, the bypass
   works, and the 429 page renders on-brand.
+- **Looser provision limits + no provisioning dead ends (DEC-028):** the per-IP allowance is raised to
+  100 per 600s and a generous global ceiling (60/min) is enabled by default as the real abuse/cost
+  stop, so a NAT/VPN group of judges sharing one egress IP is never blocked while a fast flood still
+  is; only provisioning a new workspace consults the limit, joining by code and switching to an
+  existing workspace never do. The "switch" control opens an in-place overlay (create / join / return)
+  without clearing the session, so back, cancel, and return-to-workspace land in the current
+  workspace, never the splash; the over-limit case renders in place (overlay, or a splash notice) with
+  return-to-workspace, join-by-code, and a retry hint, and /demo over the limit redirects to the
+  in-app escape instead of a dead-end page. The chaos-immune healthy path and the HMAC hashing are
+  unchanged. Validated live: a 65-provision shared-IP burst passes, a simulated fast crowd trips the
+  global ceiling, join and switch succeed under the tripped limit, and both-down provisioning still
+  works. Rate-limit dials (Vercel env, tunable without a code change, redeploy to apply):
+  RATE_LIMIT_MAX_PER_IP=100, RATE_LIMIT_WINDOW_SECONDS=600, RATE_LIMIT_GLOBAL_PER_MINUTE=60 (set "off"
+  or "0" to disable the global); PROVISION_IP_SALT and RATE_LIMIT_BYPASS_TOKEN remain env-only secrets.
 
 ## 1. Snapshot
 

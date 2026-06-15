@@ -93,6 +93,15 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     JSON for the create POST) and provisions nothing. The monitor prunes rows older than 24h; the e2e
     suite uses an env-gated bypass header. Only the IP hash is stored, never the raw IP; the salt and
     the bypass token live in env only, never committed.
+20. **Looser provision limits + no provisioning dead ends (DEC-028):** the per-IP cap is 100 per 600s
+    and a generous global ceiling (60/min) is on by default as the real abuse/cost stop; only
+    provisioning a new workspace is limited, joining by code and switching to an existing workspace
+    never are. The switch control opens an in-place overlay without clearing the session, so back,
+    cancel, and return-to-workspace land in the current workspace; the over-limit case renders in place
+    and /demo over the limit redirects to the in-app escape instead of a dead-end page. Dials live in
+    Vercel env (RATE_LIMIT_MAX_PER_IP, RATE_LIMIT_WINDOW_SECONDS, RATE_LIMIT_GLOBAL_PER_MINUTE; set the
+    global to "off" or "0" to disable), tunable without a code change. The chaos-immune healthy path
+    and the HMAC hashing are unchanged.
 
 ---
 
