@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { IncidentActions } from '@/components/IncidentActions';
 import { chaosState, query } from '@/lib/db';
+import { cn } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,16 @@ const TYPE_LABEL: Record<string, string> = {
   'severity.changed': 'severity',
   'incident.resolved': 'resolved',
 };
+
+// Per-event accent: openings/resolutions are milestones (accent/ok), state changes are signals
+// (drill amber), everything else stays neutral. Keeps the append-only log scannable at a glance.
+const TYPE_COLOR: Record<string, string> = {
+  'incident.opened': 'border-accent text-accent',
+  'incident.resolved': 'border-ok text-ok',
+  'status.changed': 'border-drill text-drill',
+  'severity.changed': 'border-drill text-drill',
+};
+const TYPE_COLOR_DEFAULT = 'border-line text-muted';
 
 export default async function IncidentPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -50,7 +61,7 @@ export default async function IncidentPage(props: { params: Promise<{ id: string
           <span className="text-ok">● consistent</span>
           <span className="text-muted"> across {regions.join(', ')}</span>
         </div>
-        <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs">
+        <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs transition-colors hover:border-accent/40">
           <div className="text-muted">opening signal</div>
           <div className="text-fg">
             {ctx.signal
@@ -58,7 +69,7 @@ export default async function IncidentPage(props: { params: Promise<{ id: string
               : 'manually opened'}
           </div>
         </div>
-        <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs">
+        <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs transition-colors hover:border-accent/40">
           <div className="text-muted">affected service</div>
           <div className="text-fg">
             {ctx.service
@@ -91,15 +102,25 @@ export default async function IncidentPage(props: { params: Promise<{ id: string
           Append-only timeline
         </h2>
         <ul className="mt-2 space-y-2">
-          {timeline.map((e) => (
-            <li key={e.eventId} className="border-l-2 border-line pl-3">
-              <div className="font-mono text-xs text-muted">
-                {fmt(e.at)} · {e.actor ?? 'system'} ·{' '}
-                <span className="text-accent">{TYPE_LABEL[e.type] ?? e.type}</span>
-              </div>
-              <div className="text-sm">{e.summary}</div>
-            </li>
-          ))}
+          {timeline.map((e) => {
+            const color = TYPE_COLOR[e.type] ?? TYPE_COLOR_DEFAULT;
+            return (
+              <li key={e.eventId} className={cn('relative border-l-2 pl-4', color)}>
+                <span
+                  className={cn(
+                    '-left-[5px] absolute top-1 size-2 rounded-full border-2 bg-bg',
+                    color,
+                  )}
+                  aria-hidden="true"
+                />
+                <div className="font-mono text-xs tabular-nums text-muted">
+                  {fmt(e.at)} · {e.actor ?? 'system'} ·{' '}
+                  <span className={color.split(' ')[1]}>{TYPE_LABEL[e.type] ?? e.type}</span>
+                </div>
+                <div className="text-sm text-fg">{e.summary}</div>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </main>

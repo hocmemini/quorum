@@ -88,9 +88,16 @@ export function VerificationProofs({
             </>
           ) : (
             <>
-              <div className="rounded-md border border-line bg-bg px-3 py-2">
-                <div className="font-mono text-lg font-semibold text-fg">
-                  {write != null ? `${write} ms` : '--'}
+              <div className="rounded-md border border-line bg-bg px-3 py-2 transition-colors hover:border-accent/40">
+                <div className="font-mono text-lg font-semibold tabular-nums text-fg">
+                  {write != null ? (
+                    <>
+                      {write}
+                      <span className="ml-0.5 text-xs font-normal text-muted">ms</span>
+                    </>
+                  ) : (
+                    '--'
+                  )}
                 </div>
                 <div className="mt-0.5 text-[11px] text-muted">
                   write commit ({outage ? `survivor ${serving}` : 'local region'})
@@ -122,8 +129,15 @@ export function VerificationProofs({
                         className={cn('size-1.5 rounded-full', w.confirmed ? 'bg-ok' : 'bg-sev1')}
                       />
                     ) : null}
-                    <span className="font-mono text-lg font-semibold text-fg">
-                      {cross != null ? `${cross} ms` : '--'}
+                    <span className="font-mono text-lg font-semibold tabular-nums text-fg">
+                      {cross != null ? (
+                        <>
+                          {cross}
+                          <span className="ml-0.5 text-xs font-normal text-muted">ms</span>
+                        </>
+                      ) : (
+                        '--'
+                      )}
                     </span>
                   </div>
                   <div className="mt-0.5 text-[11px] text-muted">

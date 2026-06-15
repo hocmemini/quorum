@@ -36,8 +36,10 @@ export function ControlPlanePanel({
       ? `${(cost.dpuMonth / 1000).toFixed(1)}K`
       : `${cost.dpuMonth}`
     : null;
-  const card = 'rounded-lg border border-line bg-surface p-4';
-  const head = 'text-sm font-semibold';
+  const card =
+    'rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line/80 hover:bg-raised/40';
+  const head =
+    'flex items-center gap-2 text-sm font-semibold before:h-3.5 before:w-1 before:rounded-full before:bg-accent before:content-[""]';
 
   return (
     <div className="mt-5 space-y-4">
@@ -61,7 +63,7 @@ export function ControlPlanePanel({
               <div
                 key={r}
                 className={cn(
-                  'rounded-md border bg-bg p-3',
+                  'rounded-md border bg-bg p-3 transition-colors',
                   isDown ? 'border-sev1/50' : isServing ? 'border-ok/50' : 'border-line',
                 )}
               >
@@ -69,7 +71,7 @@ export function ControlPlanePanel({
                   <span className="font-mono text-xs text-fg">{r}</span>
                   <span
                     className={cn(
-                      'rounded px-1.5 py-0.5 font-mono text-[10px] uppercase',
+                      'flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] uppercase',
                       isDown
                         ? 'bg-sev1/15 text-sev1'
                         : isServing
@@ -77,6 +79,7 @@ export function ControlPlanePanel({
                           : 'bg-line/40 text-muted',
                     )}
                   >
+                    {isServing ? <span className="live-dot size-1.5 rounded-full bg-ok" /> : null}
                     {isDown ? 'down' : isServing ? 'serving' : 'standby'}
                   </span>
                 </div>

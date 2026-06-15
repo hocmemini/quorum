@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Logo } from '@/components/Logo';
 import { WorkspaceBar } from '@/components/WorkspaceBar';
 import { cn } from '@/lib/utils';
 
@@ -23,13 +24,18 @@ export function WorkspaceHeader({
     </Link>
   );
   return (
-    <header className="flex flex-wrap items-baseline justify-between gap-2">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Quorum</h1>
-        <nav className="mt-1 flex gap-4 font-mono text-xs">
-          {link('/', 'War room', surface === 'war-room')}
-          {link('/reliability', 'Reliability', surface === 'reliability')}
-        </nav>
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg border border-line bg-surface">
+          <Logo className="size-5" />
+        </span>
+        <div>
+          <h1 className="text-xl font-semibold leading-none tracking-tight">Quorum</h1>
+          <nav className="mt-1.5 flex gap-4 font-mono text-xs">
+            {link('/', 'War room', surface === 'war-room')}
+            {link('/reliability', 'Reliability', surface === 'reliability')}
+          </nav>
+        </div>
       </div>
       {ws ? <WorkspaceBar name={ws.name} joinCode={ws.joinCode} /> : null}
     </header>

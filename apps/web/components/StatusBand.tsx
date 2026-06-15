@@ -30,7 +30,11 @@ export function StatusBand({
           <span
             className={cn(
               'size-2 rounded-full',
-              allDown ? 'bg-sev1' : degraded ? 'bg-sev2' : 'bg-ok',
+              allDown
+                ? 'bg-sev1 text-sev1'
+                : degraded
+                  ? 'bg-sev2 text-sev2 live-dot'
+                  : 'bg-ok text-ok live-dot',
             )}
           />
           <span className={cn(degraded ? 'text-sev2' : 'text-fg')}>
