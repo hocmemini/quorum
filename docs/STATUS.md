@@ -150,6 +150,15 @@ The stack is deployed and verified end-to-end against the live clusters.
   works. Rate-limit dials (Vercel env, tunable without a code change, redeploy to apply):
   RATE_LIMIT_MAX_PER_IP=100, RATE_LIMIT_WINDOW_SECONDS=600, RATE_LIMIT_GLOBAL_PER_MINUTE=60 (set "off"
   or "0" to disable the global); PROVISION_IP_SALT and RATE_LIMIT_BYPASS_TOKEN remain env-only secrets.
+- **v0 dark ops-terminal restyle adopted across the app (DEC-029):** the v0-generated restyle is adopted
+  wholesale under the DEC-024 Part B rule - the splash (Onboarding + a new inline Logo mark, chips, a
+  glowing demo CTA), the global theme (self-hosted Inter/JetBrains Mono web fonts, a faint app-wide
+  radial background, focus rings, a live-serving pulse), and the war-room/Reliability/incident surfaces
+  (StatusBand, WorkspaceHeader, ControlPlanePanel, VerificationProofs, badges, the incident timeline).
+  Presentational only: every proof claim string and measured number is byte-identical, the DEC-026
+  chaos step-aside + :target pulse and the DEC-024 WarmUp are preserved, existing palette tokens reused,
+  no new external images. Validated live: the three splash actions (demo/create/join) all work,
+  rate-limit + both-down behavior intact, /e2e 50 green, warm write p50 88 ms unchanged.
 
 ## 1. Snapshot
 

@@ -102,6 +102,12 @@ persuasion docs, read this end to end: several headline pieces are new to you.
     Vercel env (RATE_LIMIT_MAX_PER_IP, RATE_LIMIT_WINDOW_SECONDS, RATE_LIMIT_GLOBAL_PER_MINUTE; set the
     global to "off" or "0" to disable), tunable without a code change. The chaos-immune healthy path
     and the HMAC hashing are unchanged.
+21. **v0 dark ops-terminal restyle (DEC-029):** the v0 restyle is adopted across the splash, the global
+    theme, and the in-product surfaces (war room, Reliability, incident detail) under the DEC-024 Part B
+    rule. Presentational only - proof claims, measured numbers, the chaos-state step-aside (DEC-026),
+    the :target anchor pulse, and the WarmUp pre-warm (DEC-024) are all preserved; existing palette
+    tokens reused; self-hosted Inter/JetBrains Mono web fonts + an inline SVG logo, no new external
+    images. No API, route, rate-limit, provisioning, or proof-behavior change.
 
 ---
 
