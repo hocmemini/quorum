@@ -9,7 +9,7 @@ const field =
 const btn =
   'rounded-md border border-line bg-raised px-3 py-2 text-sm hover:border-accent disabled:opacity-50';
 
-export function Onboarding() {
+export function Onboarding({ throttled = false }: { throttled?: boolean }) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -42,6 +42,13 @@ export function Onboarding() {
     <div className="mx-auto mt-16 max-w-md">
       <h1 className="text-2xl font-semibold tracking-tight">Quorum</h1>
       <p className="mt-1 text-sm text-muted">Incident command plane on multi-region Aurora DSQL.</p>
+
+      {throttled ? (
+        <p className="mt-4 rounded-md border border-sev2/40 bg-sev2/5 p-3 text-xs text-muted">
+          Demo provisioning is busy right now. Join an existing workspace by code below, or try
+          again in a few minutes.
+        </p>
+      ) : null}
 
       {/* Zero-click front door: /demo provisions a fresh, fully-seeded workspace (DEC-024 Part C). */}
       <a

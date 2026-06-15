@@ -23,12 +23,19 @@ function fmt(d: Date | null): string {
   return d ? new Date(d).toISOString().slice(0, 16).replace('T', ' ') : '-';
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ throttled?: string }>;
+}) {
   const orgId = await activeOrgId();
   if (!orgId) {
+    // A throttled /demo deep link lands here (DEC-028): show the splash with a notice + join, never a
+    // dead end. With an org cookie the /demo redirect lands in the war room below instead.
+    const { throttled } = await searchParams;
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <Onboarding />
+        <Onboarding throttled={throttled === '1'} />
       </main>
     );
   }

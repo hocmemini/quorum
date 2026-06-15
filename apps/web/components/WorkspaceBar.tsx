@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { SwitchOverlay } from '@/components/SwitchOverlay';
 
-export function WorkspaceBar({ name: _name, joinCode }: { name: string; joinCode: string }) {
-  const router = useRouter();
+export function WorkspaceBar({ name, joinCode }: { name: string; joinCode: string }) {
   const [copied, setCopied] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   async function share() {
     try {
@@ -17,11 +17,6 @@ export function WorkspaceBar({ name: _name, joinCode }: { name: string; joinCode
     }
   }
 
-  async function leave() {
-    await fetch('/api/workspace', { method: 'DELETE' });
-    router.refresh();
-  }
-
   return (
     <div className="flex items-center gap-3 font-mono text-xs text-muted">
       <button
@@ -31,9 +26,12 @@ export function WorkspaceBar({ name: _name, joinCode }: { name: string; joinCode
       >
         {copied ? 'link copied' : `share ${joinCode}`}
       </button>
-      <button type="button" onClick={leave} className="hover:text-fg">
+      {/* Switch (DEC-028): opens the switcher without clearing the session, so cancel/return lands
+          back in this workspace rather than the splash. */}
+      <button type="button" onClick={() => setSwitching(true)} className="hover:text-fg">
         switch
       </button>
+      {switching ? <SwitchOverlay currentName={name} onClose={() => setSwitching(false)} /> : null}
     </div>
   );
 }

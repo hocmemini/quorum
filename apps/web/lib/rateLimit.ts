@@ -14,12 +14,13 @@ type RateLimitConfig = {
 };
 
 function config(): RateLimitConfig {
+  // Defaults sized for shared judge IPs (DEC-028): a NAT/VPN group never trips the per-IP cap, and a
+  // generous global ceiling is the real abuse/cost stop. Set the global to "off" or "0" to disable it.
+  const rawGlobal = process.env.RATE_LIMIT_GLOBAL_PER_MINUTE ?? '60';
   return {
     windowSeconds: Number(process.env.RATE_LIMIT_WINDOW_SECONDS ?? 600),
-    maxPerIp: Number(process.env.RATE_LIMIT_MAX_PER_IP ?? 5),
-    globalPerMinute: process.env.RATE_LIMIT_GLOBAL_PER_MINUTE
-      ? Number(process.env.RATE_LIMIT_GLOBAL_PER_MINUTE)
-      : null,
+    maxPerIp: Number(process.env.RATE_LIMIT_MAX_PER_IP ?? 100),
+    globalPerMinute: rawGlobal === 'off' || rawGlobal === '0' ? null : Number(rawGlobal),
     bypassToken: process.env.RATE_LIMIT_BYPASS_TOKEN || null,
   };
 }
@@ -69,40 +70,4 @@ export async function checkProvisionRateLimit(
 
   await queryHealthy((db) => recordProvisionAttempt(db, hash));
   return null;
-}
-
-/** On-brand 429 page for the /demo GET (a browser navigation), so a throttle never white-screens. */
-export function provisionThrottledPage(retryAfter: number): Response {
-  const mins = Math.max(1, Math.ceil(retryAfter / 60));
-  const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Quorum - slow down</title>
-<style>
-  :root { color-scheme: dark; }
-  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0b0e14; color:#e6e9ef;
-         font-family: ui-sans-serif, system-ui, sans-serif; }
-  .card { max-width:28rem; margin:1rem; padding:2rem; border:1px solid #232a3b; border-radius:.75rem; background:#141925; }
-  h1 { font-size:1rem; margin:0 0 .5rem; }
-  p { color:#8a93a6; font-size:.875rem; line-height:1.5; margin:.5rem 0; }
-  .mono { font-family:ui-monospace,monospace; color:#ffb020; }
-  a { color:#4aa3ff; text-decoration:none; font-family:ui-monospace,monospace; font-size:.8rem; }
-</style>
-</head>
-<body>
-  <div class="card">
-    <h1>Easy there - too many demo workspaces</h1>
-    <p>You've spun up a lot of fresh demo war rooms in a short window. This is a soft limit that keeps
-       the public demo healthy during judging; your data and the rest of the app are unaffected.</p>
-    <p>Try again in about <span class="mono">${mins} minute${mins === 1 ? '' : 's'}</span>, or
-       <a href="/">return to your current workspace</a>.</p>
-  </div>
-</body>
-</html>`;
-  return new Response(html, {
-    status: 429,
-    headers: { 'content-type': 'text/html; charset=utf-8', 'retry-after': String(retryAfter) },
-  });
 }

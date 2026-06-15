@@ -40,4 +40,12 @@ wcode="$(curl -s -b "$JAR" -o /dev/null -w '%{http_code}' "$BASE/")"
 rm -f "$JAR"
 [ "$wcode" = "200" ] || { echo "FAIL: provisioned war room returned $wcode (want 200)"; exit 1; }
 echo "PASS: /demo provisions ($code) under both-down; war room loads healthy ($wcode)"
+# Join-by-code is never rate-limited (DEC-028): create one (bypass), then join it WITHOUT bypass.
+created="$(curl -s "${BYPASS[@]}" -X POST "$BASE/api/workspace" -H 'content-type: application/json' -d '{"action":"create","name":"e2e join source"}')"
+jcode="$(printf '%s' "$created" | python3 -c "import sys,json;print(json.load(sys.stdin).get('joinCode',''))" 2>/dev/null || true)"
+if [ -n "$jcode" ]; then
+  jstatus="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/workspace" -H 'content-type: application/json' -d "{\"action\":\"join\",\"code\":\"$jcode\"}")"
+  [ "$jstatus" = "200" ] || { echo "FAIL: join-by-code (no bypass) returned $jstatus (want 200)"; exit 1; }
+  echo "PASS: join-by-code succeeds without bypass ($jstatus) - never rate-limited (DEC-028)"
+else echo "WARN: could not capture join code; skipping join assertion"; fi
 echo "Manual: exercise the war room + drill/restore, then reset with scripts/wipe-db.sh --seed"

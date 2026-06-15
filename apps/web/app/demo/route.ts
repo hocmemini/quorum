@@ -1,7 +1,7 @@
 import { createWorkspace } from '@quorum/api';
 import { NextResponse } from 'next/server';
 import { CHAOS_COOKIE_NAME, ORG_COOKIE_NAME, queryHealthy } from '@/lib/db';
-import { checkProvisionRateLimit, provisionThrottledPage } from '@/lib/rateLimit';
+import { checkProvisionRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,13 @@ export async function GET(req: Request) {
   // Provision rate-limit (DEC-027), before any workspace is created. Uses the same chaos-immune
   // healthy path as provisioning, so a drill never breaks it (DEC-025 invariant preserved).
   const limited = await checkProvisionRateLimit(req);
-  if (limited) return provisionThrottledPage(limited.retryAfter);
+  if (limited) {
+    // No dead end (DEC-028): send the browser to the in-app escape - the war room if the session
+    // already has a workspace, the splash with a throttled notice + join-by-code if not.
+    const dest = new URL('/', req.url);
+    dest.searchParams.set('throttled', '1');
+    return NextResponse.redirect(dest);
+  }
   const ws = await queryHealthy((db) => createWorkspace(db, autoName()));
   const res = NextResponse.redirect(new URL('/', req.url));
   res.cookies.set(ORG_COOKIE_NAME, ws.orgId, {
