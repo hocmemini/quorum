@@ -243,3 +243,31 @@ hidden. (E) The EC2 credit activity was completed in the console; a db.t3.micro 
 created for the RDS activity, left up pending verification before teardown. (F) Re-ran the live E2E
 (48 pass; warm write p50 ~89 ms, failover ~57 ms warm / ~553 ms cold) and the deployed
 front-and-back flow. Spend $0 within the $20 budget.
+
+## 2026-06-14: Full teardown — AWS returned to clean
+
+Operator-authorized teardown of the entire Quorum backend ("nothing remains from the project").
+Destroyed the app stacks (ingest, monitor, app) and the bootstrap stack via Terraform, plus the
+resources created outside Terraform. Sequence and result:
+
+(A) Ingest stack destroyed (Lambda, EventBridge rule/target/permission, log group, role + policies):
+8 resources. (B) Monitor stack destroyed (Lambda, EventBridge schedule, three claim alarms + the p99
+latency alarm, role + policies): 11 resources; the destroy needed dummy `dsql_endpoint_use1/use2`
+vars the teardown script does not pass. (C) The two multi-region DSQL clusters (us-east-1 +
+us-east-2) still had deletion protection ON and the Terraform `-var deletion_protection=false` apply
+400'd, so protection was disabled directly via the DSQL API on both, then both clusters were deleted;
+the us-west-2 witness cascaded. All three regions now report zero clusters. App state reconciled to
+empty (IAM user `quorum-vercel` + inline policy destroyed with the stack). (D) Bootstrap stack
+destroyed (monthly budget, billing alarm, SNS topic + email subscription, the S3 tfstate bucket +
+versioning/encryption/public-access-block, and the account-level S3 public-access-block): 9
+resources; the tfstate bucket was emptied of all object versions first. (E) Non-Terraform resources
+removed by hand: the `quorum-vercel-oidc` IAM role (inline `dsql-connect` deleted first) and the
+`oidc.vercel.com/quorum-h0` OIDC provider. (F) One orphan log group `/aws/lambda/quorum-dsql-monitor`
+(Lambda auto-created, never Terraform-managed) deleted.
+
+Verified clean across us-east-1/us-east-2/us-west-2: zero DSQL clusters, Lambdas, EventBridge rules,
+CloudWatch alarms, Lambda log groups, custom IAM roles, local IAM policies, budgets, SNS topics, and
+S3 buckets (account-wide). A broader billable-resource sweep (RDS instances/clusters/snapshots, EC2,
+EBS, Elastic IPs) found nothing in any region — the db.t3.micro from the earlier RDS credit activity
+was already gone. The only remaining account resource is the `h0-deploy` IAM admin user (the
+teardown identity itself), intentionally left in place pending the operator's decision. Spend $0.
